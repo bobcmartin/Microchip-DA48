@@ -49,6 +49,10 @@
 #define PIN_PF5 (39)
 #define PIN_PF6 (40)
 
+//Set a vaule for LED_BUILTIN in the IDE.  The 48-pin variant board uses pin 20 for
+//it's built in LED.  pd
+#define LED_BUILTIN 20
+
 #define PINS_COUNT                     41
 #define NUM_DIGITAL_PINS               PINS_COUNT
 #define NUM_ANALOG_INPUTS              18
