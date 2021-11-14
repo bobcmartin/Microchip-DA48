@@ -1,29 +1,37 @@
-/*
-  Arduino.h - Main include file for the Arduino SDK
-  Copyright (c) 2005-2013 Arduino Team.  All right reserved.
-
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+/* Arduino.h - Main include file for the Arduino SDK
+ * Copyright (c) 2005-2013 Arduino Team.  All right reserved.
+ * And presumably from then until 2018 when this was forked
+ * for megaTinyCore. Copyright 2018-2021 Spence Konde
+ * Part of DxCore, which adds Arduino support for the AVR DA,
+ * DB, and DD-series microcontrollers from Microchip.
+ * DxCore is free software (LGPL 2.1)
+ * See LICENSE.txt for full legal boilerplate if you must */
+/*************************************************************
+ * This file contains the stuff I think people are most likely
+ * to need to refer to. The minutia has all been pushed into
+ * core_devices.h if it's independent of pins_arduino.h or into
+ * pinswap.h if it relates to PORTMUX, which is a great volume
+ * of stuff nobody should have to read.
+ *
+ * That means functions and macros that may be used by user code
+ * (except for part-feature ones - those are clearly documented
+ * in the readme if they are ready for users).
+ * I also try to put detailed comments in where appropriate.
+ *************************************************************/
 
 #ifndef Arduino_h
 #define Arduino_h
 
-#include "core_devices.h"
 #include "api/ArduinoAPI.h"
-//#include "ioadd.h"
-
+#include "core_devices.h"
+#include "device_timer_pins.h"
+/* Gives names to all the timer pins - relies on core_devices.h being included first.*/
+/* These names look like:
+ * PIN_TCD0_WOC_DEFAULT
+ * PIN_TCA0_WO5_ALT3
+ * and so on.
+ * They are #defines. Pins that don't exist are #defined as NOT_A_PIN.
+ * TCA and TCD only currently */
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
@@ -31,15 +39,24 @@
 extern "C"{
 #endif
 
-// Constant checks error handler
+/* we call badArg() when we know at compile time that one or more arguments passed to
+ * the function is nonsensical or doomed to generate useless output. For example,
+ * analogWrite() on a constant pin that will never support PWM, or digitalWrite() on
+ * a pin number that is neither a pin nor NOT_A_PIN (which silently does nothing for
+ * compatibility).
+ * badCall() on the other hand is called if we know that regardless of what arguments
+ * are passed, that function is nonsensical with current settings, for example, millis()
+ * when millis timekeeping has been disabled */
 void badArg(const char*) __attribute__((error("")));
 void badCall(const char*) __attribute__((error("")));
 
+// The fast digital I/O functions only work when the pin is known at compile time.
 inline __attribute__((always_inline)) void check_constant_pin(pin_size_t pin)
 {
   if(!__builtin_constant_p(pin))
     badArg("Fast digital pin must be a constant");
 }
+
 
 /* Analog reference options - Configuring these is very simple, unlike tinyAVR 0/1
    and megaAVR 0, and like tinyAVR 2-series. */
@@ -90,9 +107,6 @@ inline __attribute__((always_inline)) void check_constant_pin(pin_size_t pin)
 // in free-running mode or a long-running burst conversion; taking a burst
 // accumulated reading and then calling a specified function when the result
 // was finally ready may be supported in a future version.
-#define ADC_ENH_ERROR_INVALID_SAMPLE_LENGTH    -2100000002
-// SAMPLEN can be specified when calling analogReadEnh; an invalid value was
-// specified. The maximum depends on the hardware.
 #define ADC_ENH_ERROR_RES_TOO_LOW              -2100000003
 // analogReadEnh() must not be called with a resolution lower than 8-bits.
 // you can right-shift as well as the library can.
@@ -114,10 +128,10 @@ inline __attribute__((always_inline)) void check_constant_pin(pin_size_t pin)
 
 
 /* inlining of a call to delayMicroseconds() would throw it off */
-__attribute__ ((noinline)) void _delayMicroseconds(unsigned int us);
+void _delayMicroseconds(unsigned int us) __attribute__((noinline));
 
 
-/*
+/*************************************************
  * Extended API - Enhanced DxCore features
  * These are functions users might call from the
  * sketch, or in some cases, override.
@@ -131,62 +145,117 @@ __attribute__ ((noinline)) void _delayMicroseconds(unsigned int us);
 // stop, restart and set millis intended for switching to RTC for millis timekeeping while sleeping.
 void stop_millis();                       // stop the timer being used for millis, and disable the interrupt.
 void restart_millis();                    // After having stopped millis either for sleep or to use timer for something else and optionally have set it to correct for passage of time, call this to restart it.
-void set_millis(uint32_t newmillis);      // Sets the millisecond timer to the specified number of milliseconds.
+void set_millis(uint32_t newmillis);      // Sets the millisecond timer to the specified number of milliseconds. DO NOT CALL with a number lower than the current millis count if you have any timeouts ongoing.
+                                          // they may expire instantly.
+void nudge_millis(uint16_t nudgemillis);  // Sets the millisecond timer forward by the specified number of milliseconds. Currently only implemented for TCB, TCA implementation will be added. This allows a clean
+                                          // way to advance the timer without needing to read the current millis yourself, and without a few other risks. (added becauise *I* needed it, but simple enough).
+                                          // The intended use case is when you know you're disabling millis for a long time, and know exactly how long that is (ex, to update neopixels), and want to nudge the timer
+                                          // forward by a given amount; I added this when in a pinch because *I* needed that functionality.
+
 // Allows for user to mark a timer "do not touch" for purposes of analogWrite and the like, so you can take over a timer and reconfigure it, and not worry about digitalWrite() flipping a CMPEN bit.
 // On megaTinyCore this also prevents the situation where PWM is remapped, but then when the user is digitalWrite'ing pins that default to having PWM, it would turn off the PWM now coming from another pin
 // This is not an issue because we fully support portmux (can't spare the flash overhead on the tinies, people already complain that the core uses too much flash)
 void takeOverTCA0();                      // Can be used to tell core not to use TCA0 for any API calls - user has taken it over.
 void takeOverTCA1();                      // Can be used to tell core not to use TCA1 for any API calls - user has taken it over.
 void takeOverTCD0();                      // Can be used to tell core not to use TCD0 for any API calls - user has taken it over.
-void resumeTCA0();                        // Restores core-mediated functionality that uses TCA0 after reconfiguring it.
-void resumeTCA1();                        // Restores core-mediated functionality that uses TCA1 after reconfiguring it.
-bool digitalPinHasPWMNow(uint8_t p);      // Returns true if the pin can currently output PWM by virtue of having TCA (considering PORTMUX) pointed at it.
+void resumeTCA0();                        // Restores core-mediated functionality that uses TCA0 and restores default TCA0 configuration.
+void resumeTCA1();                        // Restores core-mediated functionality that uses TCA1 and restores default TCA1 configuration.
+//bool digitalPinHasPWM(uint8_t p);       // Macro. Returns true if the pin can currently output PWM using analogWrite(), regardless of which timer is used and considering current PORTMUX setting
 uint8_t digitalPinToTimerNow(uint8_t p);  // Returns the timer that is associated with the pin now (considering PORTMUX)
 
 // These are in here so that - should it be necessary - library functions or user code could override these.
 void init_clock()  __attribute__((weak)); // this is called first, to initialize the system clock.
 void init_ADC0()   __attribute__((weak)); // this is called to initialize ADC0
-//   init_DAC0()                          // no init_DAC0() - all that the core does is call DACReference().
-void init_timers() __attribute__((weak)); // this function is expected to configure all timers for PWM. init_millis() is called after this.
-void init_TCA0()   __attribute__((weak)); // called by init_timers() - If you must override the init_timers() (try to do one of these instead)
-void init_TCA1()   __attribute__((weak)); // called by init_timers() - you need to call init() methods for all timers you want analogWrite to work with
+//   init_DAC0()                          // no _init_DAC0() - all that the core does is call DACReference().
+void init_TCA0()   __attribute__((weak)); // called by init_timers() - without this, pins that give PWM from TCA0 will not function.
+void init_TCA1()   __attribute__((weak)); // called by init_timers() - without this, pins that give PWM from TCA1 will not function, nor will the TCBs unless the clock source is changed.
 void init_TCBs()   __attribute__((weak)); // called by init_timers()
 void init_TCD0()   __attribute__((weak)); // called by init_timers()
-void init_millis();                       // called by init() after everything else and just before enabling interrupts and calling setup() - sets up and enables millis timekeeping.
+void init_millis() __attribute__((weak)); // called by init() after everything else and just before enabling interrupts and calling setup() - sets up and enables millis timekeeping.
 
-//
+void onClockFailure() __attribute__((weak)); // called by the clock failure detection ISR. Default action is a blink code with 4 blinks.
+void onClockTimeout() __attribute__((weak)); // called if we try to switch to external cloc, but it doesn't work. Default action is a blink code with 3 blinks.
+
+#ifndef CORE_ATTACH_OLD
+  void attachPortAEnable();
+  void attachPortBEnable();
+  void attachPortCEnable();
+  void attachPortDEnable();
+  void attachPortEEnable();
+  void attachPortFEnable();
+  void attachPortGEnable();
+#endif
+
 // ANALOG EXTENDED FUNCTIONS
-//
 // Covered in documentation.
 
-int32_t analogReadEnh( uint8_t pin,              uint8_t res, uint8_t gain);
-int32_t analogReadDiff(uint8_t pos, uint8_t neg, uint8_t res, uint8_t gain);
-int16_t analogClockSpeed(int16_t frequency, uint8_t options);
-bool    analogReadResolution(uint8_t res);
-bool    analogSampleDuration(uint8_t dur);
-void    DACReference(uint8_t mode);
+int32_t           analogReadEnh(uint8_t pin,                uint8_t res,  uint8_t gain);
+int32_t          analogReadDiff(uint8_t pos,  uint8_t neg,  uint8_t res,  uint8_t gain);
+int16_t        analogClockSpeed(int16_t frequency, uint8_t options);
+bool       analogReadResolution(uint8_t res);
+bool       analogSampleDuration(uint8_t dur);
+void               DACReference(uint8_t mode);
+
+uint8_t      getAnalogReference();
+uint8_t         getDACReference();
+uint8_t getAnalogSampleDuration();
+int8_t  getAnalogReadResolution();
 
 //
 // DIGITAL I/O EXTENDED FUNCTIONS
-//
 // Covered in documentation.
+void           openDrain(uint8_t pinNumber,   uint8_t val);
+int8_t   digitalReadFast(uint8_t pinNumber               );
+void    digitalWriteFast(uint8_t pinNumber,   uint8_t val);
+void       openDrainFast(uint8_t pinNumber,   uint8_t val);
+void        pinConfigure(uint8_t pinNumber, uint16_t mode);
+void          turnOffPWM(uint8_t pinNumber               );
 
-void    openDrain(          pin_size_t pinNumber, uint8_t val);
-int8_t  digitalReadFast(    pin_size_t pinNumber);
-void    digitalWriteFast(   pin_size_t pinNumber, uint8_t val);
-void    openDrainFast(      pin_size_t pinNumber, uint8_t val);
-void    pinConfigure(       pin_size_t pinNumber, uint16_t mode);
-void    turnOffPWM(         pin_size_t pinNumber);
+// Not a function, still important
+#define digitalPinHasPWMNow(p)            (digitalPinToTimerNow(p) != NOT_ON_TIMER)
 
 // avr-libc defines _NOP() since 1.6.2
+// Spence: Better tell avr-gcc that, it seems to disagree
 #ifndef _NOP
-  #define _NOP() do { __asm__ volatile ("nop"); } while (0)
+  #define _NOP()    do { __asm__ volatile ("nop"); } while (0)
 #endif
-
-uint16_t clockCyclesPerMicrosecondComp(uint32_t clk);
+#ifndef _NOP2
+  #define _NOP2()   do { __asm__ volatile ("nop"); } while (0)
+#endif
+#ifndef _NOPNOP
+  #define _NOPNOP() do { __asm__ volatile ("rjmp .+0"); } while (0)
+#endif
+#ifndef _NOP8
+  #define _NOP8()   do { __asm__ volatile ("rjmp .+2"  "\n\t" \
+                                           "ret"       "\n\t" \
+                                           "rcall .-4" "\n\t"); } while (0)
+#endif
+#ifndef _NOP14
+  #define _NOP14()  do { __asm__ volatile ("rjmp .+2"  "\n\t" \
+                                           "ret"       "\n\t" \
+                                           "rcall .-4" "\n\t" \
+                                           "rcall .-6" "\n\t" ); } while (0)
+#endif
 uint16_t clockCyclesPerMicrosecond();
-unsigned long clockCyclesToMicroseconds(unsigned long cycles);
-unsigned long microsecondsToClockCycles(unsigned long microseconds);
+uint32_t clockCyclesToMicroseconds(uint32_t cycles);
+uint32_t microsecondsToClockCycles(uint32_t microseconds);
+
+// Currently DxCore has no cases where the millis timer isn';t derived from system clock, but that will change
+/* This becomes important when we support other timers for timekeeping. The Type D timer can be faster, requiring:
+ * These talk about the timebase from which millis is derived, not the actual timer counting frequency.
+ * That is, it's used to calculqte the values that are we multipliy by the prescaler to get the timekeeping stuff.
+ * These can be different from the above only when the millis timer isn't running from CLK_PER.
+     For example, if we run it from a TCD clocked from internal HF but we are running on a crystal.
+     That's a strange way to use the TCD, but
+ * megaTinyCore has these, and we will have wsomething analogou.
+
+uint16_t millisClockCyclesPerMicrosecond();
+uint32_t millisClockCyclesToMicroseconds(uint32_t cycles);
+uint32_t microsecondsToMillisClockCycles(uint32_t microseconds);
+
+ * the time and sleep library will require some things like this.
+ */
+
 
 /* Timers and Timer-like-things
  * These are used for two things: Identifying the timer on a pin in
@@ -214,7 +283,8 @@ unsigned long microsecondsToClockCycles(unsigned long microseconds);
  * The DAC is listed here because analogWrite() uses it almost exactly like
  * a PWM timer.
  * RTC can be used as a millis timekeeping source (well, not currently on
- * DxCore, but soon).
+ * DxCore, but it can on megaTinyCore, and might one day be possible on DxCore
+ * though I'm not sure I want to implement it that way).
  *****************************************************************************/
 
 #define NOT_ON_TIMER  0x00
@@ -225,10 +295,9 @@ unsigned long microsecondsToClockCycles(unsigned long microseconds);
 #define TIMERB2       0x22
 #define TIMERB3       0x23
 #define TIMERB4       0x24
-#define TIMERD0       0x40 /* in PWM context will show up as (TIMERD0 | 0-7), ex 0x40, 0x42 etc - that part is the mux value. nothng that s not TCD0 will have bit 6 set. */
+#define TIMERD0       0x40 /* in PWM context will show up as (TIMERD0 | 0-7), ex 0x40, 0x42 etc - that part is the mux value (not the channel). nothing that is not TCD0 will have bit 6 set. */
 #define TIMERRTC      0x90
 #define DACOUT        0x80
-
 
 // These are lookup tables to find pin parameters from Arduino pin numbers
 // They are defined in the variant's pins_arduino.h
@@ -251,9 +320,14 @@ extern const uint8_t digital_pin_to_timer[];
 
 /* PORT names and the NOT_A_* definitions - used EVERYWHERE! */
 
-#define NOT_A_PIN 255
-#define NOT_A_PORT 255
-#define NOT_AN_INTERRUPT 255
+#define NOT_A_PIN         (255)
+// Generally, you should check for getting this when you ask for a pin  ;-)
+#define NOT_A_PORT        (255)
+// Same numeric value, but used for improved code readability
+#define NOT_AN_INTERRUPT  (255)
+#define NOT_A_MUX         (255)
+// invalid portmux options
+// When cast to int8_t these are -1, but it is critical to define them as 255, not -1 because we check if they're less than the number of something
 
 #define PA 0
 #define PB 1
@@ -264,99 +338,67 @@ extern const uint8_t digital_pin_to_timer[];
 #define PG 6
 #define NUM_TOTAL_PORTS 7
 
-//pinConfigure()
-#define PIN_DIR_OUTPUT       0x0001 // Alias
-#define PIN_DIR_INPUT        0x0002 // Alias
-#define PIN_DIR_OUT          0x0001 // Alias
-#define PIN_DIR_IN           0x0002 // Alias
-#define PIN_DIR_TOGGLE       0x0003 // Alias
-#define PIN_OUT_HIGH         0x0004 // Alias
-#define PIN_OUT_LOW          0x0008 // Alias
-#define PIN_OUT_TOGGLE       0x000C // Alias
+// These are used as the second argument to pinConfigure(pin,configuration)
+// You can bitwise OR as many of these as you want, or just do one. Very
+// flexible function; not the world's fastest though. Directives are handled
+// in the order they show up on this list.
 #define PIN_DIRSET           0x0001
 #define PIN_DIRCLR           0x0002
 #define PIN_DIRTGL           0x0003
+#define PIN_DIR_OUTPUT       0x0001 // Alias
+#define PIN_DIR_OUT          0x0001 // Alias
+#define PIN_DIR_INPUT        0x0002 // Alias
+#define PIN_DIR_IN           0x0002 // Alias
+#define PIN_DIR_TOGGLE       0x0003 // Alias
+#define PIN_DIR_TGL          0x0003 // Alias
 #define PIN_OUTSET           0x0004
 #define PIN_OUTCLR           0x0008
 #define PIN_OUTTGL           0x000C
-#define PIN_PULLUP           0x0100
-#define PIN_NOPULLUP         0x0200
-#define PIN_PULLUP_ON        0x0100
-#define PIN_PULLUP_OFF       0x0200
-#define PIN_PULLUP_TGL       0x0300 // I suppose I can see uses for this
-#define PIN_INVERT_ON        0x4000
-#define PIN_INVERT_OFF       0x8000
-#define PIN_INVERT_TGL       0xC000 // One of the less useful ones...
-#define PIN_INLVL_TTL        0x1000 // MVIO parts only
-#define PIN_INLVL_SCHMIT     0x2000 // MVIO parts only
-#define PIN_INLVL_ON         0x1000 // MVIO parts only
-#define PIN_INLVL_OFF        0x2000 // MVIO parts only
+#define PIN_OUT_HIGH         0x0004 // Alias
+#define PIN_OUT_LOW          0x0008 // Alias
+#define PIN_OUT_TOGGLE       0x000C // Alias
+#define PIN_OUT_TGL          0x000C // Alias
 #define PIN_INPUT_ENABLE     0x0080
 #define PIN_INT_CHANGE       0x0090
 #define PIN_INT_RISE         0x00A0
 #define PIN_INT_FALL         0x00B0
 #define PIN_INPUT_DISABLE    0x00C0
 #define PIN_INT_LEVEL        0x00D0
+#define PIN_PULLUP_ON        0x0100
+#define PIN_PULLUP_OFF       0x0200
+#define PIN_PULLUP_TOGGLE    0x0300 // I suppose I can see uses for this
+#define PIN_PULLUP           0x0100 // Alias
+#define PIN_NOPULLUP         0x0200 // Alias
+#define PIN_PULLUP_TGL       0x0300 // I suppose I can see uses for this
+#define PIN_INVERT_ON        0x4000
+#define PIN_INVERT_OFF       0x8000
+#define PIN_INVERT_TGL       0xC000 // One of the less useful ones...
+#define PIN_INVERT_TOGGLE    0xC000 // One of the less useful ones...
+#define PIN_INLVL_TTL        0x1000 // MVIO parts only
+#define PIN_INLVL_SCHMITT    0x2000 // MVIO parts only
+#define PIN_INLVL_ON         0x1000 // MVIO parts only
+#define PIN_INLVL_OFF        0x2000 // MVIO parts only
 
-#define digitalPinToPort(pin)               ((pin  < NUM_TOTAL_PINS ) ? digital_pin_to_port[pin]         : NOT_A_PIN)
-#define digitalPinToBitPosition(pin)        ((pin  < NUM_TOTAL_PINS ) ? digital_pin_to_bit_position[pin] : NOT_A_PIN)
-#define digitalPinToBitMask(pin)            ((pin  < NUM_TOTAL_PINS ) ? digital_pin_to_bit_mask[pin]     : NOT_A_PIN)
-#define digitalPinToTimer(pin)              ((pin  < NUM_TOTAL_PINS ) ? digital_pin_to_timer[pin]        : NOT_ON_TIMER)
-#define portToPortStruct(port)              (((port) < NUM_TOTAL_PORTS) ? (((PORT_t *) &PORTA) + (port))                  : NULL)
-#define digitalPinToPortStruct(pin)         ((pin  < NUM_TOTAL_PINS ) ? (((PORT_t *)  &PORTA) + digitalPinToPort(pin)) : NULL)
+#define digitalPinToPort(pin)               ((pin     < NUM_TOTAL_PINS ) ? digital_pin_to_port[pin]         : NOT_A_PIN)
+#define digitalPinToBitPosition(pin)        ((pin     < NUM_TOTAL_PINS ) ? digital_pin_to_bit_position[pin] : NOT_A_PIN)
+#define digitalPinToBitMask(pin)            ((pin     < NUM_TOTAL_PINS ) ? digital_pin_to_bit_mask[pin]     : NOT_A_PIN)
+#define digitalPinToTimer(pin)              ((pin     < NUM_TOTAL_PINS ) ? digital_pin_to_timer[pin]        : NOT_ON_TIMER)
+#define portToPortStruct(port)              (((port)  < NUM_TOTAL_PORTS) ? (((PORT_t *)  &PORTA) +                (port)) : NULL)
+#define digitalPinToPortStruct(pin)         ((pin     < NUM_TOTAL_PINS ) ? (((PORT_t *)  &PORTA) + digitalPinToPort(pin)) : NULL)
 #define analogPinToBitPosition(pin)         ((digitalPinToAnalogInput(pin) !=  NOT_A_PIN) ? digital_pin_to_bit_position[pin] : NOT_A_PIN)
 #define analogPinToBitMask(pin)             ((digitalPinToAnalogInput(pin) !=  NOT_A_PIN) ? digital_pin_to_bit_mask[pin]     : NOT_A_PIN)
 #define getPINnCTRLregister(port, bit_pos)  (((port != NULL) && (bit_pos < NOT_A_PIN)) ? ((volatile uint8_t *)&(port->PIN0CTRL) + bit_pos) : NULL)
-#define digitalPinToInterrupt(P) (P)
-#define getAnalogSampleDuration()           (ADC0.SAMPCTRL)
+#define digitalPinToInterrupt(P)            (P)
 
-/*#define portToDigitalPinZero(port)           (in variant - needed to get from port number for TCA mux to the pins to turnOffPWM() on them).
-// If hardware has PORTx,
-if ((digitalPinToPort(portToDigitalPinZero(digitalPinToPort(some_pin)) + bit_position) \
-                        == digitalPinToPort(some_pin)) is true if and only if there is a PIN n within the same port.   */
+/*
+#define portToPinZero(port)           (in variant - needed to get from port number for TCA mux to the pins to turnOffPWM() on them).
+ The main application involves taking advantage of the fact that we always number pins in order within each port and never shuffle ports around; it wound up being necessary when I was working with the automatic PWM pin remapping.
+*/
 
 #define portOutputRegister(P) ( (volatile uint8_t *)( &portToPortStruct(P)->OUT ) )
 #define portInputRegister(P)  ( (volatile uint8_t *)( &portToPortStruct(P)->IN ) )
 #define portModeRegister(P)   ( (volatile uint8_t *)( &portToPortStruct(P)->DIR ) )
 
-
-#define CORE_HAS_FASTIO 1                /* DxCore has the digitalReadFast() and digitalWriteFast()              */
-#define CORE_HAS_OPENDRAIN 1             /* DxCore has openDrain() and openDrainFast()                           */
-#define CORE_HAS_PINCONFIG 1             /* pinConfigure is now implemented                                      */
-#define CORE_HAS_TIMER_TAKEOVER 1        /* DxCore has takeOverTCA0(), takeOverTCA0() and takeOverTCD0()         */
-#define CORE_HAS_TIMER_RESUME 1          /* DxCore has resumeTCA0(), resumeTCAq() and resumeTCD0()               */
-#define SUPPORT_LONG_TONES 1             /* tone()s specifying duration are timed by counting the oscillations.
- * Frequency is in Hz, while duration is in ms, so (2 * frequency * duration)/1000 is the number of transitions
- * before it should write the pin low and turn off the timer. Obviously the 2 can be factored, but it will still
- * overflow when frequency * duration > 4.2b. A high-pitched tone of 20 kHz would overflow if a delay of longer
- * than around 7 minutes was requested (prior to this update, the maximum was a factor of two lower than that)
- * On parts like the Dx-series where there's no problem with flash space, we now, when duration > (2^16) ms (a
- * necessary precondition for overflow to occur) do ((frequency / 5) * (duration/100)) at cost of ~100b flash .  */
-#define ADC_DIFFERENTIAL 1               /* Basic modern-AVR differential ADC                                    */
-#define CORE_HAS_ANALOG_ENH 1            /* DxCore has analogReadEnh()                                           */
-#define CORE_HAS_ANALOG_DIFF 1           /* DxCore has analogReadDiff()                                          */
-#define ADC_MAX_OVERSAMPLED_RESOLUTION 15 /* DxCore has 15 bit maximum resolution via oversampling and decimation*/
-
-#ifdef OPAMP0
-  #ifndef ADC_MAXIMUM_GAIN
-    #define ADC_MAXIMUM_GAIN -1            /* DB-series can use their OPAMPs as a PGA         */
-  #endif
-  #define PIN_OPAMP0_INP PIN_PD1
-  #define PIN_OPAMP0_OUT PIN_PD2
-  #define PIN_OPAMP0_INN PIN_PD3
-  #ifdef OPAMP1
-    #define PIN_OPAMP1_INP PIN_PD4
-    #define PIN_OPAMP1_OUT PIN_PD5
-    #define PIN_OPAMP1_INN PIN_PD7
-  #endif
-  #ifdef OPAMP2
-    #define PIN_OPAMP2_INP PIN_PE1
-    #define PIN_OPAMP2_OUT PIN_PE2
-    #define PIN_OPAMP2_INN PIN_PE3
-  #endif
-#else
-  #define ADC_MAXIMUM_GAIN 0                /* DA and DD series don't have any                */
-#endif
 
 #ifdef __cplusplus
 } // extern "C"
@@ -366,29 +408,22 @@ if ((digitalPinToPort(portToDigitalPinZero(digitalPinToPort(some_pin)) + bit_pos
   #include "UART.h"
   int32_t analogReadEnh( uint8_t pin,              uint8_t res = ADC_NATIVE_RESOLUTION, uint8_t gain = 0);
   int32_t analogReadDiff(uint8_t pos, uint8_t neg, uint8_t res = ADC_NATIVE_RESOLUTION, uint8_t gain = 0);
-  int16_t analogClockSpeed(int16_t frequency = 0, uint8_t options = 0);
+  int16_t analogClockSpeed(int16_t frequency = 0,  uint8_t options = 0);
 #endif
 
 #include "pins_arduino.h"
+#include "pinswap.h"
 
 
-// If not otherwise specified, we will assume the DAC outputs on PD6 - No product has
-// been announced with it anywhere else, nor has any product been announced with more than 1.
-#ifdef DAC0
-  #ifndef PIN_DACOUT
-    #define PIN_DACOUT PIN_PD6
-  #endif
-#endif
+
 
 // A little bit of trickery - this allows Serial to be defined as something other than USART0
 // Use case is for boards where the main serial port is not USART0 to be used without the user
 // having to find/replace Serial with Serial2 or whatever on their existing code if that's where
-// the monitor is.
+// the monitor is. It requires that the board be defined by a variant file
 #ifndef Serial
-  #define Serial Serial0
+  #define Serial Serial0 //Error here? Check for missing ; previous line in sketch.
 #endif
-
-
 
 /* Moved from pins_arduino.h to reduce code duplication - also made better decisions */
 // These serial port names are intended to allow libraries and architecture-neutral
@@ -435,10 +470,10 @@ if ((digitalPinToPort(portToDigitalPinZero(digitalPinToPort(some_pin)) + bit_pos
 // is on PORTC, the MVIO port.
 
 #if !defined(SERIAL_PORT_MONITOR)
-  #if defined(USART2) && (SERIAL_PORT_MONITOR != Serial2)
+  #if defined(USART2) && (SERIAL_PORT_MONITOR != Serial2) && (!defined(SERIAL_PORT_BOOT) || SERIAL_PORT_BOOT != Serial2)
     #define SERIAL_PORT_HARDWARE_OPEN Serial2
   #else
-    #if (SERIAL_PORT_MONITOR != Serial0)
+    #if (SERIAL_PORT_MONITOR != Serial0 ) && (!defined(SERIAL_PORT_BOOT) || SERIAL_PORT_BOOT != Serial0)
       #define SERIAL_PORT_HARDWARE_OPEN Serial0
     #else
       #define SERIAL_PORT_HARDWARE_OPEN Serial1
@@ -454,6 +489,7 @@ if ((digitalPinToPort(portToDigitalPinZero(digitalPinToPort(some_pin)) + bit_pos
 // For everyone else it's Serial1, and for non-DD parts, that is the only port
 // that could be used with MVIO (again, short of rerouting signals with
 // the event system)
+// Note that if MVIO is disabled, we cannot detect that.
   #if defined(DD_14_PINS) || defined(DD_20_PINS)
     #define SERIAL_PORT_MVIO Serial0
   #else

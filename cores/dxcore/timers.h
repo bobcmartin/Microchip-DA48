@@ -14,7 +14,7 @@
 #if (defined(MILLIS_USE_TIMERB0) || defined(MILLIS_USE_TIMERB1) || defined(MILLIS_USE_TIMERB2)|| defined(MILLIS_USE_TIMERB3)|| defined(MILLIS_USE_TIMERB4))
   #if (F_CPU==1000000UL)
     #define TIME_TRACKING_TIMER_DIVIDER   1
-    #define TIME_TRACKING_TIMER_PERIOD ((F_CPU/500)-1)
+    #define TIME_TRACKING_TIMER_PERIOD ((F_CPU/1000)-1)
   #else
     #define TIME_TRACKING_TIMER_DIVIDER   2
     #define TIME_TRACKING_TIMER_PERIOD ((F_CPU/2000)-1)
@@ -39,12 +39,12 @@
 #else //Otherwise it must be a TCA
   #define TIME_TRACKING_TIMER_PERIOD    0xFE
 
-  #if     (F_CPU > 25000000UL)
+  #if     (F_CPU > 30000000UL)
     #define TIME_TRACKING_TIMER_DIVIDER   256
-  #elif   (F_CPU <= 5000000UL)
-    #define TIME_TRACKING_TIMER_DIVIDER   16
   #elif   (F_CPU <= 1000000UL)
     #define TIME_TRACKING_TIMER_DIVIDER   8
+  #elif   (F_CPU <= 5000000UL)
+    #define TIME_TRACKING_TIMER_DIVIDER   16
   #else // Almost always this one:
         // 25000000UL >= F_CPU > 5000000
     #define TIME_TRACKING_TIMER_DIVIDER   64
@@ -52,16 +52,20 @@
 #endif
 
 
-
-#if (F_CPU == 1000000 || F_CPU == 20000000)
-  #define TIMERD0_CLOCK_SETTING (TCD_CNTPRES_DIV4_gc|TCD_SYNCPRES_DIV1_gc|TCD_CLKSEL_CLKPER_gc)
-#elif (F_CPU == 5000000 || F_CPU == 10000000)
-  #define TIMERD0_CLOCK_SETTING (TCD_CNTPRES_DIV32_gc|TCD_SYNCPRES_DIV1_gc|TCD_CLKSEL_OSCHF_gc)
+#if (CLOCK_SOURCE != 0 && !defined(TIMERD0_CLOCK_SOURCE)) /* Hey, we're on crystal or ext clock - we can run the TCD at whatever speed we want! */
+  #define TIMERD0_CLOCK_SETTING (TCD_CNTPRES_DIV32_gc | TCD_SYNCPRES_DIV1_gc | TCD_CLKSEL_OSCHF_gc)
+  #define TIMERD0_SET_CLOCK (0)
+#elif (F_CPU  < 4000000UL) /* Very slow clock speeds */
+  #define TIMERD0_CLOCK_SETTING ( TCD_CNTPRES_DIV4_gc | TCD_SYNCPRES_DIV1_gc | TCD_CLKSEL_CLKPER_gc)
+#elif (F_CPU == 5000000UL || F_CPU == 10000000UL)
+  #define TIMERD0_CLOCK_SETTING (TCD_CNTPRES_DIV32_gc | TCD_SYNCPRES_DIV1_gc | TCD_CLKSEL_OSCHF_gc)
 #else
-  #define TIMERD0_CLOCK_SETTING (TCD_CNTPRES_DIV32_gc|TCD_SYNCPRES_DIV1_gc|TCD_CLKSEL_CLKPER_gc)
+  #define TIMERD0_CLOCK_SETTING (TCD_CNTPRES_DIV32_gc | TCD_SYNCPRES_DIV1_gc | TCD_CLKSEL_CLKPER_gc)
 #endif
 
-#if (F_CPU == 1000000 || F_CPU == 20000000 || F_CPU == 40000000 || F_CPU == 80000000)
+#if (F_CPU == 1000000 || F_CPU == 2000000 || F_CPU == 4000000 || F_CPU == 8000000)
+  #define TIMERD0_TOP_SETTING   (254)
+#elif (CLOCK_SOURCE != 0)
   #define TIMERD0_TOP_SETTING   (254)
 #elif (F_CPU > 20000000)
   #define TIMERD0_TOP_SETTING   (1019)
@@ -72,7 +76,7 @@
 
 //#endif
 
-#define TIME_TRACKING_TICKS_PER_OVF   (TIME_TRACKING_TIMER_PERIOD + 1)
+#define TIME_TRACKING_TICKS_PER_OVF   (TIME_TRACKING_TIMER_PERIOD + 1UL)
 #define TIME_TRACKING_CYCLES_PER_OVF  (TIME_TRACKING_TICKS_PER_OVF * TIME_TRACKING_TIMER_DIVIDER)
 
 //For a type B timer as millis, these #defines aren't needed!
@@ -84,7 +88,7 @@
 #define PWM_TIMER_PERIOD  0xFE  /* For frequency */
 #define PWM_TIMER_COMPARE 0x80  /* For duty cycle */
 
-#if defined(MILLIS_USE_TIMERA0)
+#if   defined(MILLIS_USE_TIMERA0)
   #define MILLIS_TIMER TIMERA0
 #elif defined(MILLIS_USE_TIMERA1)
   #define MILLIS_TIMER TIMERA1

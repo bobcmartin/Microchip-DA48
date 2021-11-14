@@ -1,4 +1,4 @@
-# DA48/DB48 Library
+# DxCore Library
 This library provides wrappers around a few chip features that didn't seem appropriate to put into the API at large, but which also did not seem large enough for a library. The examples may also include examples of using chip functionality with no library or wrapper at all; see the specific examples for more information. In all of these functions, a "successful" return value is 0, while potential failures are non-zero values. While this may initially seem backwards, it means that one can use the value returned directly in an `if` statement to check for success/failure, rather than comparing to a "success" value, yet the returned value also contains the full reason for the failure if that is needed. This is the same convention used by program "exit code" or "exit status" - for the same reason.
 
 ## PWM stuff
@@ -27,7 +27,7 @@ Returns `true` if an argument referring to a valid port was passed and a value w
 The AVR DB-series supports a new feature, Multi-Voltage IO (MVIO). When enabled by fuse (this is the default setting. DxCore does not support changing it, either - if it is not in use, VDDIO2 must be tied to VDD, so behavior is the same as if it were enabled - but if it was disabled on hardware wired with the expectation that it would be enabled, my understanding is that this could result in hardware damage). A new macro is provided, `getMVIOStatus()`, which returns a value depending on whether MVIO is supported, whether it is enabled, and if so, whether VDDIO2 voltage is high enough that the MVIO pins (PORTC) are available.
 
 This returns one of the following constants:
-```
+```c++
 MVIO_DISABLED       -128
 MVIO_BAD_FUSE       -64
 MVIO_UNDERVOLTAGE    1
@@ -37,7 +37,7 @@ MVIO_UNSUPPORTED    -1
 
 These numeric values mean that `if(getMVIOStatus()){...}` will run the conditional statements if MVIO is not enabled and working. Similarly, `if(getMVIOStatus()>=0){...}` will run the conditional if MVIO is supported and enabled, whether or not there is an appropriate VDDIO2 voltage supplied.
 
-```c
+```c++
 void checkMVIO() {
   int status=getMVIOStatus();
   switch(status) {
@@ -85,16 +85,17 @@ typedef enum X32K_ENABLE {
 } X32K_ENABLE_t;
 ```
 
-`void configXOSC32K(X32K_TYPE_t, X32K_ENABLE_t)`
+```c++
+void configXOSC32K(X32K_TYPE_t, X32K_ENABLE_t)
 // attempts to configure the external crystal or oscillator.
 // see above for valid values of these two arguments. This handles the enable-locking of many of these bits.
 // which means it may disable this clock source (CSUT is long enough that this likely matters!)
 // since CLKCTRL.MCLKSTATUS&CLKCTRL_XOSC32KS_bm won't be true until something requests that clock source, you have to actually enable autotune in order to check the status...
 
-`void disableXOSC32K()`
-disables the external 32.768 kHz oscillator
+void disableXOSC32K()
+// disables the external 32.768 kHz oscillator
 
-`uint8_t enableAutoTune() `
+uint8_t enableAutoTune()
 // if configXOSC32K() was previously called, those settings will be retained, otherwise external oscillator is enabled with
 // 1 second startu time and normal (not low power) crystal.
 // Returns 1 if autotune was not successfully enabled - waited for CSUT + 0.5 seconds, and status still reported XOSC32K as not running/stable!
@@ -102,10 +103,10 @@ disables the external 32.768 kHz oscillator
 // under this circumstance, autotune will not impact the main clock - and the main clock, in fact, is likely more accurate than autotune would achieve.
 // Returns 0 if autotune is successfully enabled within the time permitted by XOSC32KCTRLA's currently configured CSUT bits.
 
-`uint8_t disableAutoTune()`
+uint8_t disableAutoTune()
 // Returns 255 (-1) if autotune was not enabled.
 // Returns 0 if autotune is successfully disabled.
-
+```
 
 ```c
 // example
@@ -149,6 +150,4 @@ void doStuffWithOSC() {
 
   //Done!
 }
-
-
 ```

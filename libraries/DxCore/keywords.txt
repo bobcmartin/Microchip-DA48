@@ -2,11 +2,11 @@
 _PROTECTED_WRITE	KEYWORD2
 _PROTECTED_WRITE_SPM	KEYWORD2
 
-#	DA48	/	megaTinyCore	Analog	Stuff
+#	DxCore	/	megaTinyCore	Analog	Stuff
 DACReference	KEYWORD2
 analogReadResolution	KEYWORD2
 
-#	DA48	/	megaTinyCore	digital	stuff
+#	DxCore	/	megaTinyCore	digital	stuff
 openDrain	KEYWORD2
 openDrainFast	KEYWORD2
 digitalWriteFast	KEYWORD2
