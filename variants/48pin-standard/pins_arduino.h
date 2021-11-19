@@ -80,7 +80,7 @@ EA-series parts.
 #define NUM_TOTAL_PINS                      NUM_DIGITAL_PINS
 
 #if !defined(LED_BUILTIN)
-  #define LED_BUILTIN                       PIN_PA7
+  #define LED_BUILTIN                       PIN_PC6
 #endif
 #ifdef CORE_ATTACH_OLD
   #define EXTERNAL_NUM_INTERRUPTS           (47)
