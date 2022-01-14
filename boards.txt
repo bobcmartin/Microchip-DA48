@@ -3,7 +3,6 @@
 
 menu.chip=Chip
 
-
 ##############################################################
 
 # BOARD NAMES
@@ -16,21 +15,13 @@ avrda.name=AVR DA-series
 
 
 
-##########################################################################
-#                                                                        #
-###                 ###  #     # ####      ####   ###                  ###
-#####              #   # #     # #   #     #   # #   #               #####
-#######            #####  #   #  ####  ### #   # #####             #######
-#####              #   #   # #   # #       #   # #   #               #####
-###                #   #    #    #  #      ####  #   #                 ###
-#________________________________________________________________________#
-
-
 ################################
-# Constant across all settings #
+#  AVR-DA Settings             #
 ################################
 
+# Upload Settings
 avrda.upload.tool=avrdude
+avrda.upload.prog_interlock=
 
 # Build settings
 avrda.build.board=avrda
@@ -39,6 +30,11 @@ avrda.build.text_section_start=.text=0x0
 avrda.build.extra_flags={build.millis} -DCLOCK_SOURCE={build.clocksource} {bootloader.appspm}
 avrda.build.export_merged_output=false
 avrda.build.mcupostfix=
+avrda.build.printf=
+avrda.build.printfabr=
+avrda.build.attachabr=
+avrda.build.wireabr=
+avrda.build.appspmabr=.spm{bootloader.CODESIZE}
 
 # Bootloading settings
 avrda.bootloader.tool=avrdude
@@ -51,7 +47,7 @@ avrda.bootloader.avrdudestring=
 avrda.bootloader.pymcuprogstring=-aerase
 
 ################################
-# Tools Submenu Options        #
+# Tools Defaults               #
 ################################
 
 # App SPM
@@ -81,31 +77,25 @@ avrda.bootloader.bodlevbits=000
 
 
 # EESAVE option
-#avrda.menu.chip.eesave.enable=EEPROM retained
 avrda.bootloader.eesavebit=1
 
 
 # Reset pin as GPIO option
-avrda.menu.chip.resetpin.reset=Hardware Reset (recommended)
 avrda.bootloader.resetpinbits=10
 
-# millis/micros timing source
-# TCD0 and RTC not yet supported
-#avrda.menu.chip.millis.tcb2=TCB2
-
 avrda.build.millis=-DMILLIS_USE_TIMER{build.millistimer}
-
 avrda.build.millistimer=B2
 
-#avrda.menu.millis.rtc.build.millistimer=RTC
-#avrda.menu.millis.rtcxtal.build.millistimer=RTC_XTAL
-#avrda.menu.millis.rtcxosc.build.millistimer=RTC_XOSC
-#avrda.build.millistimer=NONE
-
 # Startup Time
-#avrda.startuptime.8= 8ms
 avrda.bootloader.SYSCFG1=0x04
 
+# Wire Mode
+avrda.menu.wiremode.mors1=1x Wire, Master or Slave (least Flash & RAM)
+avrda.menu.wiremode.mors1.build.wire.mode=MORS_SINGLE
+avrda.menu.wiremode.mors1.build.wireabr=.wO
+
+# AttachInterrupt Mode
+avrda.build.attachmode=-DCORE_ATTACH_ALL
 
 
 ###############More sections to come (Below)###################################
