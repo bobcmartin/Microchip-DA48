@@ -47,16 +47,13 @@ int main()  __attribute__((weak));
  * will be needed in any event at the core level if VUSB-based "stuff" arrives, but really I'm  *
  * just waiting for the DU-series now                                                           */
 int main() {
-  onBeforeInit(); //Emnpty callback called before init but after the .init stuff. First normal code executed
-  init(); //Interrupts are turned on just prior to init() returning.
+  onBeforeInit(); // Emnpty callback called before init but after the .init stuff. First normal code executed
+  init(); // Interrupts are turned on just prior to init() returning.
   initVariant();
-  if (!onAfterInit()) sei();  //enable interrupts.
+  if (!onAfterInit()) sei();  // enable interrupts.
   setup();
   for (;;) {
     loop();
-    #ifdef ENABLE_SERIAL_EVENT /* this is never true unless core is modified */
-      if (serialEventRun) serialEventRun();
-    #endif
   }
 }
 
@@ -100,10 +97,14 @@ int main() {
    * register on startup, which is rarely done in Arduino land.                                 */
   void __attribute__((weak)) init_reset_flags() ;
   void __attribute__((weak)) init_reset_flags() {
-    if (RSTCTRL.RSTFR == 0){
+    uint8_t flags = RSTCTRL.RSTFR;
+    RSTCTRL.RSTFR = flags;
+    if (flags == 0) {
       _PROTECTED_WRITE(RSTCTRL.SWRR, 1);
     }
+    GPIOR0 = flags;
   }
+
 
 
 /* This is the simplest solution that clears the flags. However, it is trivial to extend to     *
@@ -170,7 +171,7 @@ int main() {
       _PROTECTED_WRITE(CPUINT_CTRLA,CPUINT_IVSEL_bm);
       onPreMain();
     }
-    #if (SPM_FROM_APP==-1)
+    #if (SPM_FROM_APP == -1)
       /* Declared as being located in .init3 so it gets put way at the start of the binary. This guarantees that
        * it will be in the first page of flash. Must be marked ((used)) or LinkTime Optimization (LTO) will see
        * that nothing actually calls it and optimize it away. The trick of course is that it can be called if
@@ -189,8 +190,8 @@ int main() {
       }
     #endif
   #endif
-  // Finally, none of thwse three things need to be done if running optiboot!
-  // We want the vectors in the alt location, it checks, clears, and stashes the reswet flags (in GPR0)
+  // Finally, none of these three things need to be done if running optiboot!
+  // We want the vectors in the alt location, it checks, clears, and stashes the reset flags (in GPR0)
   // and it providews the entrypoint we call to write to flash.
 #else
   void _initThreeStuff() __attribute__ ((naked)) __attribute__((used)) __attribute__ ((section (".init3")));
