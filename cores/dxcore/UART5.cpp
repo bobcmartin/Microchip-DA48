@@ -1,67 +1,83 @@
-/*
-  UART5.cpp - Hardware serial library for Wiring
-  Copyright (c) 2006 Nicholas Zambetti.  All right reserved.
-
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-  Modified 23 November 2006 by David A. Mellis
-  Modified 28 September 2010 by Mark Sproul
-  Modified 14 August 2012 by Alarus
-  Modified 3 December 2013 by Matthijs Kooijman
-*/
+/* UART5.cpp - Hardware serial library
+ * This library is free software under LGPL 2.1. See License.md
+ * for more information. This file is part of DxCore.
+ *
+ * Copyright (c) 2006 Nicholas Zambetti, Modified by
+ * 11/23/2006 David A. Mellis, 9/20/2010 Mark Sproul,
+ * 8/24/2012 Alarus, 12/3/2013 Matthijs Kooijman
+ * unknown others 2013-2020, 2020-2021 Spence Konde
+ */
 
 #include "Arduino.h"
 #include "UART.h"
 #include "UART_private.h"
 
-// Each UartClass is defined in its own file, sine the linker pulls
-// in the entire file when any element inside is used. --gc-sections can
-// additionally cause unused symbols to be dropped, but ISRs have the
-// "used" attribute so are never dropped and they keep the
-// UartClass instance in as well. Putting each instance in its own
-// file prevents the linker from pulling in any unused instances in the
-// first place.
-
-#if defined(HAVE_HWSERIAL5)
-
-#if defined(HWSERIAL5_RXC_VECTOR)
-ISR(HWSERIAL5_RXC_VECTOR)
-{
-  Serial5._rx_complete_irq();
-}
+#if defined(USART5)
+  #if USE_ASM_TXC == 1
+    ISR(USART5_TXC_vect, ISR_NAKED) {
+      __asm__ __volatile__(
+            "push  r30"         "\n\t" // push the low byte of Z
+            "ldi r30, 0xA0"     "\n\t" // and put the low bit of this USART there - 0x20 * n
+#if PROGMEM_SIZE > 8192
+            "jmp _do_txc"       "\n\t" // _do_txc pushes the other necessary registers and loads 0x08 into the high byte.
 #else
-#error "Don't know what the Data Received interrupt vector is called for Serial5"
+            "rjmp _do_txc"      "\n\t"
 #endif
-
-#if defined(HWSERIAL5_DRE_VECTOR)
-ISR(HWSERIAL5_DRE_VECTOR)
-{
-  Serial5._tx_data_empty_irq();
-}
+            :::);
+    }
+  #else
+    ISR(USART5_TXC_vect) {
+      uint8_t ctrla;
+      while (USART5.STATUS & USART_RXCIF_bm) {
+        ctrla = USART5.RXDATAL;
+      }
+      ctrla = USART5.CTRLA;
+      ctrla |= USART_RXCIE_bm; // turn on receive complete
+      ctrla &= ~USART_TXCIE_bm; // turn off transmit complete
+      USART5.CTRLA = ctrla;
+    }
+  #endif
+  #if !(USE_ASM_RXC == 1 && (SERIAL_RX_BUFFER_SIZE == 256 || SERIAL_RX_BUFFER_SIZE == 128 || SERIAL_RX_BUFFER_SIZE == 64 || SERIAL_RX_BUFFER_SIZE == 32 || SERIAL_RX_BUFFER_SIZE == 16))
+    ISR(USART5_RXC_vect) {
+      UartClass::_rx_complete_irq(Serial5);
+    }
+  #else
+    ISR(USART5_RXC_vect, ISR_NAKED) {
+      __asm__ __volatile__(
+            "push      r30"     "\n\t"
+            "push      r31"     "\n\t"
+            :::);
+      __asm__ __volatile__(
+#if PROGMEM_SIZE > 8192
+            "jmp   _do_rxc"     "\n\t"
 #else
-#error "Don't know what the Data Register Empty interrupt vector is called for Serial5"
+            "rjmp   _do_rxc"    "\n\t"
 #endif
-
-#if defined(HWSERIAL5)
-  UartClass Serial5(HWSERIAL5, HWSERIAL5_DRE_VECTOR_NUM, PIN_HWSERIAL5_RX, PIN_HWSERIAL5_TX, HWSERIAL5_MUX, PIN_HWSERIAL5_RX_PINSWAP_1, PIN_HWSERIAL5_TX_PINSWAP_1, HWSERIAL5_MUX_PINSWAP_1);
+            ::"z"(&Serial5));
+      __builtin_unreachable();
+  }
+  #endif
+  #if !(USE_ASM_DRE == 1 && (SERIAL_RX_BUFFER_SIZE == 256 || SERIAL_RX_BUFFER_SIZE == 128 || SERIAL_RX_BUFFER_SIZE == 64 || SERIAL_RX_BUFFER_SIZE == 32 || SERIAL_RX_BUFFER_SIZE == 16) && \
+                            (SERIAL_TX_BUFFER_SIZE == 256 || SERIAL_TX_BUFFER_SIZE == 128 || SERIAL_TX_BUFFER_SIZE == 64 || SERIAL_TX_BUFFER_SIZE == 32 || SERIAL_TX_BUFFER_SIZE == 16))
+    ISR(USART5_DRE_vect) {
+      UartClass::_tx_data_empty_irq(Serial5);
+    }
+  #else
+    ISR(USART5_DRE_vect, ISR_NAKED) {
+      __asm__ __volatile__(
+                "push  r30"     "\n\t"
+                "push  r31"     "\n\t"
+                :::);
+      __asm__ __volatile__(
+#if PROGMEM_SIZE > 8192
+                "jmp _do_dre"   "\n\t"
+#else
+                "rjmp _do_dre"  "\n\t"
 #endif
+                ::"z"(&Serial5));
+      __builtin_unreachable();
+    }
+  #endif
 
-// Function that can be weakly referenced by serialEventRun to prevent
-// pulling in this file if it's not otherwise used.
-bool Serial5_available() {
-  return Serial5.available();
-}
-
-#endif // HAVE_HWSERIAL5
+  UartClass Serial5(&USART5, (uint8_t*)_usart5_pins, MUXCOUNT_USART5, HWSERIAL5_MUX_DEFAULT);
+#endif  // HWSERIAL5
