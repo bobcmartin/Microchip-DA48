@@ -11,14 +11,16 @@
     void attachPortDEnable() {
       intFunc[3]=intFunc_D;
     }
-    ISR(PORTD_PORT_vect, ISR_NAKED){
+    ISR(PORTD_PORT_vect, ISR_NAKED) {
       asm volatile(
-        "push r1"       "\n\t"
-        "push r16"      "\n\t"
-        "ldi r16, 6"    "\n\t"
-        ::);
-        isrBody();
-      __builtin_unreachable();
+        "push r16"        "\n\t"
+        "ldi r16, 6"      "\n\t"
+#if PROGMEM_SIZE > 8192
+        "jmp AttachedISR" "\n\t"
+#else
+        "rjmp AttachedISR" "\n\t"
+#endif
+      ::);
     }
   #endif
 #endif
