@@ -53,7 +53,7 @@ inline __attribute__((always_inline)) void check_valid_digital_pin(uint8_t pin)
       {
       #if defined(XTAL_PINS_HARDWIRED)
         if (pin < 2)
-          badArg("Digital Pin is constant PIN_PA0 or PA1, but those are hardwired to ab external crystal and not available for other uses");
+          badArg("Digital Pin is constant PIN_PA0 or PA1, but those are hardwired to an external crystal and not available for other uses");
       #endif
       }
     }
@@ -115,24 +115,24 @@ void _pinConfigure(uint8_t pin, uint16_t pinconfig) {
   }
   volatile uint8_t *portbase = (volatile uint8_t*) digitalPinToPortStruct(pin);
   uint8_t bit_pos = digitalPinToBitPosition(pin);
-  uint8_t setting = pinconfig & 0x03; //grab direction bits
+  uint8_t setting = pinconfig & 0x03; // grab direction bits
   if (setting) {
-    *(portbase + setting) = bit_mask;
+    *(portbase + setting) = bit_mask; // DIR
   }
   pinconfig >>= 2;
   setting = pinconfig & 0x03; // as above, only for output
   if (setting) {
-    *(portbase + 4 + setting) = bit_mask;
+    *(portbase + 4 + setting) = bit_mask;  // OUT
   }
-  if (!(pinconfig & 0x03FFC)) return;
+  if (!(pinconfig & 0x3FFC)) return; // RETURN if we're done before we start this mess.
   pinconfig >>= 2;
   uint8_t oldSREG = SREG;
   cli();
   uint8_t pinncfg = *(portbase + 0x10 + bit_pos);
   if (pinconfig & 0x08 ) {
-    pinncfg = (pinncfg & 0xF8 ) | (pinconfig & 0x07);
+    pinncfg = (pinncfg & 0xF8 ) | (pinconfig & 0x07); // INPUT SENSE CONFIG
   }
-  uint8_t temp = pinconfig & 0x30;
+  uint8_t temp = pinconfig & 0x30; // PULLUP
   if (temp) {
     if (temp == 0x30) {
       pinncfg ^= 0x08;    // toggle pullup - of dubious utility
@@ -170,7 +170,7 @@ void _pinConfigure(uint8_t pin, uint16_t pinconfig) {
     }
   }
   #endif
-  temp = pinconfig & 0x0C;
+  temp = pinconfig & 0x0C; // INVERT PIN
   if (temp) {
     if (temp == 0x0C) {
       pinncfg ^= 0x80;    // toggle invert - of dubious utility, but I'll accept it.
@@ -181,12 +181,12 @@ void _pinConfigure(uint8_t pin, uint16_t pinconfig) {
     }
   }
   *(portbase + 0x10 + bit_pos) = pinncfg;
-  SREG=oldSREG; //re-enable interrupts
+  SREG=oldSREG; // re-enable interrupts
 }
 
-void _pinMode(uint8_t pin, uint8_t mode); //Forward Declaration
+void _pinMode(uint8_t pin, uint8_t mode); // Forward Declaration
 
-//Same purpose as the mess before pinConfigure()
+// Same purpose as the mess before pinConfigure()
 
 inline __attribute__((always_inline)) void pinMode(uint8_t pin, uint8_t mode) {
   check_valid_digital_pin(pin);         /* generate compile error if a constant that is not a valid pin is used as the pin */
@@ -223,7 +223,7 @@ void _pinMode(uint8_t pin, uint8_t mode) {
     return;                             /* ignore invalid pins passed at runtime */
   }
   PORT_t *port = digitalPinToPortStruct(pin);
-  //if (port == NULL) return;           /* skip this test; if bit_mask isn't NOT_A_PIN, port won't be null - if it is, pins_arduino.h contains errors and we can't expect any digital I/O to work correctly.
+  // if (port == NULL) return;           /* skip this test; if bit_mask isn't NOT_A_PIN, port won't be null - if it is, pins_arduino.h contains errors and we can't expect any digital I/O to work correctly.
   if (mode == OUTPUT) {
     port->DIRSET = bit_mask;            /* Configure direction as output and done*/
   } else {                              /* mode == INPUT or INPUT_PULLUP - more complicated */
@@ -258,7 +258,7 @@ void turnOffPWM(uint8_t pin)
   uint8_t timer = digitalPinToTimerNow(pin);
   if(timer == NOT_ON_TIMER) return;
 
-  //uint8_t bit_pos = digitalPinToBitPosition(pin);
+  // uint8_t bit_pos = digitalPinToBitPosition(pin);
   uint8_t bit_mask = digitalPinToBitMask(pin);
   // we know is valid because we were told it was a timer above.
   TCB_t *timerB;
@@ -268,19 +268,19 @@ void turnOffPWM(uint8_t pin)
   /* TCA0 */
   case TIMERA0:
     /* Bit position will give output channel */
-    if (bit_mask > 0x04)  bit_mask <<= 1; //there's a blank bit in the middle
+    if (bit_mask > 0x04)  bit_mask <<= 1; // there's a blank bit in the middle
     /* Disable corresponding channel */
     TCA0.SPLIT.CTRLB &= ~bit_mask;
     break;
   #ifdef TCA1
   case TIMERA1:
     /* Bit position will give output channel */
-    if (bit_mask > 0x04)  bit_mask <<= 1; //there's a blank bit in the middle
+    if (bit_mask > 0x04)  bit_mask <<= 1; // there's a blank bit in the middle
     /* Disable corresponding channel */
     TCA1.SPLIT.CTRLB &= ~bit_mask;
     break;
   #endif
-  //TCB - only one output
+  // TCB - only one output
   case TIMERB0:
   case TIMERB1:
   case TIMERB2:
@@ -289,7 +289,7 @@ void turnOffPWM(uint8_t pin)
 
     timerB = (TCB_t *) &TCB0 + (timer - TIMERB0);
 
-     //Disable TCB compare channel
+     // Disable TCB compare channel
     timerB->CTRLB &= ~(TCB_CCMPEN_bm);
 
     break;
@@ -308,7 +308,7 @@ void turnOffPWM(uint8_t pin)
       #else
         // on the DA series, it could be any of them
         #ifndef ERRATA_TCD_PORTMUX
-          uint8_t fcset = TCD0.FAULTCTRL & (bit_mask > 0x0F ? bit_mask : bit_mask << 4 ); //hopefully that gets rendereed as swap, not 4 leftshifts
+          uint8_t fcset = TCD0.FAULTCTRL & (bit_mask > 0x0F ? bit_mask : bit_mask << 4 ); // hopefully that gets rendereed as swap, not 4 leftshifts
         #else
           uint8_t fcset = TCD0.FAULTCTRL & bit_mask;
         #endif
@@ -330,7 +330,7 @@ void turnOffPWM(uint8_t pin)
         // Experimentally found ENRDY must be set set to configure FAULTCTRL
         while(!(TCD0.STATUS & 0x01));    // wait until it can be re-enabled
         _PROTECTED_WRITE(TCD0.FAULTCTRL,TCD0.FAULTCTRL & ~fcset);
-        //while(!(TCD0.STATUS & 0x01));    // wait until it can be re-enabled
+        // while(!(TCD0.STATUS & 0x01));    // wait until it can be re-enabled
         TCD0.CTRLA |= TCD_ENABLE_bm;  // re-enable it
         #if defined(NO_GLITCH_TIMERD0)
           *pin_ctrl_reg &= ~(PORT_INVEN_bm);
@@ -510,7 +510,7 @@ inline __attribute__((always_inline)) void openDrainFast(uint8_t pin, uint8_t va
 {
   check_constant_pin(pin);
   check_valid_digital_pin(pin);
-  if (pin==NOT_A_PIN) return; // sigh... I wish I didn't have to catch this... but it's all compile time known so w/e
+  if (pin == NOT_A_PIN) return; // sigh... I wish I didn't have to catch this... but it's all compile time known so w/e
   // Mega-0, Tiny-1 style IOPORTs
   // Assumes VPORTs exist starting at 0 for each PORT structure
   uint8_t mask = 1 << digital_pin_to_bit_position[pin];
@@ -523,9 +523,36 @@ inline __attribute__((always_inline)) void openDrainFast(uint8_t pin, uint8_t va
   if (val == LOW) {
     vport->OUT &= ~mask;
     vport->DIR |= mask;
-  } else if (val==CHANGE) {
+  } else if (val == CHANGE) {
     vport->OUT &= ~mask;
     portstr->DIRTGL = mask;
   } else// FLOAT
     vport->DIR &= ~mask;
+}
+
+inline __attribute__((always_inline)) void pinModeFast(uint8_t pin, uint8_t mode) {
+  check_constant_pin(pin);
+  if (!__builtin_constant_p(mode)) {
+    badArg("mode must be constant when used with pinModeFast");
+  } else {
+    if (mode != INPUT && mode != OUTPUT && mode != INPUT_PULLUP) { //} && mode != OUTPUT_PULLUP) {
+      badArg("The mode passed to pinModeFast must be INPUT, OUTPUT, INPUT_PULLUP");// or OUTPUT_PULLUP");
+    }
+  }
+  check_valid_digital_pin(pin);         // generate compile error if a constant that is not a valid pin is used as the pin
+  uint8_t mask = 1 << digital_pin_to_bit_position[pin];
+  uint8_t port = digital_pin_to_port[pin];
+  VPORT_t *vport;
+  vport = (VPORT_t *)(port * 4);
+  volatile uint8_t *pin_ctrl = (volatile uint8_t *) (0x410 + digital_pin_to_port[pin] * 0x20 + digital_pin_to_bit_position[pin]);
+  if (mode == OUTPUT)// || mode == OUTPUT_PULLUP)
+    vport->DIR |= mask;
+  else
+    vport->DIR &= ~mask;
+    // 1 clock to set direction
+  if (mode == INPUT_PULLUP)
+    *pin_ctrl |= PORT_PULLUPEN_bm;
+  else if (mode == INPUT)
+    *pin_ctrl &= ~PORT_PULLUPEN_bm;
+    // and 5 to switch the damned pullup.
 }
