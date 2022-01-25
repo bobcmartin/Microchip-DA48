@@ -8,7 +8,7 @@ menu.chip=Chip
 # BOARD NAMES
 
 avrda.name=AVR DA-series
-
+avrdb.name=AVR128DB48
 
 
 ##############################################################
@@ -96,6 +96,89 @@ avrda.menu.wiremode.mors1.build.wireabr=.wO
 
 # AttachInterrupt Mode
 avrda.build.attachmode=-DCORE_ATTACH_ALL
+
+
+################################
+#  AVR-DB Settings             #
+################################
+
+# Upload Settings
+avrdb.upload.tool=avrdude
+avrdb.upload.prog_interlock=
+
+# Build settings
+avrdb.build.board=avrdb
+avrdb.build.core=dxcore
+avrdb.build.text_section_start=.text=0x0
+avrdb.build.extra_flags={build.millis} -DCLOCK_SOURCE={build.clocksource} {bootloader.appspm}
+avrdb.build.export_merged_output=false
+avrdb.build.mcupostfix=
+avrdb.build.printf=
+avrdb.build.printfabr=
+avrdb.build.attachabr=
+avrdb.build.wireabr=
+avrdb.build.appspmabr=.spm{bootloader.CODESIZE}
+
+# Bootloading settings
+avrdb.bootloader.tool=avrdude
+avrdb.bootloader.WDTCFG=0x00
+avrdb.bootloader.BODCFG={bootloader.bodlevbits}{bootloader.bodmodebits}
+avrdb.bootloader.SYSCFG0=0b1100{bootloader.resetpinbits}0{bootloader.eesavebit}
+avrdb.bootloader.CODESIZE=0x00
+avrdb.bootloader.BOOTSIZE=0x01
+avrdb.bootloader.avrdudestring=
+avrdb.bootloader.pymcuprogstring=-aerase
+
+################################
+# Tools Defaults               #
+################################
+
+# App SPM
+avrdb.bootloader.appspm=
+avrdb.bootloader.BOOTSIZE=0x00
+
+
+# Chip (pins and memory size)
+
+avrdb.menu.chip.128DB48=AVR128DB48
+avrdb.menu.chip.128DB48.build.mcu=avr128db48
+avrdb.menu.chip.128DB48.upload.maximum_size=131072
+avrdb.menu.chip.128DB48.upload.maximum_data_size=16384
+avrdb.menu.chip.128DB48.build.variant=48pin-standard
+
+
+# Clock Speed + Source
+#avrdb.24internal=24 MHz internal
+avrdb.build.f_cpu=24000000L
+avrdb.build.speed=24
+avrdb.build.clocksource=0
+
+
+# BrownOut Detect Options
+#avrdb.build.1v9=1.9V
+avrdb.bootloader.bodlevbits=000
+
+
+# EESAVE option
+avrdb.bootloader.eesavebit=1
+
+
+# Reset pin as GPIO option
+avrdb.bootloader.resetpinbits=10
+
+avrdb.build.millis=-DMILLIS_USE_TIMER{build.millistimer}
+avrdb.build.millistimer=B2
+
+# Startup Time
+avrdb.bootloader.SYSCFG1=0x04
+
+# Wire Mode
+avrdb.menu.wiremode.mors1=1x Wire, Master or Slave (least Flash & RAM)
+avrdb.menu.wiremode.mors1.build.wire.mode=MORS_SINGLE
+avrdb.menu.wiremode.mors1.build.wireabr=.wO
+
+# AttachInterrupt Mode
+avrdb.build.attachmode=-DCORE_ATTACH_ALL
 
 
 ###############More sections to come (Below)###################################
