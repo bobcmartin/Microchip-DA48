@@ -1,4 +1,4 @@
-# **EEPROM Library V2.1.2** for Modern AVRs
+# **EEPROM Library V2.1.3** for Modern AVRs
 
 **Written by:** _Christopher Andrews_.
 **Ported by:** _Spence Konde_.
@@ -11,17 +11,23 @@ It can be used exactly like the one included with the standard Arduino AVR core.
 
 It is included with DxCore and megaTinyCore.
 
+## When is EEPROM erased?
+1. When a sketch manually erases some or all of it.
+2. IF using a non-optiboot configuration, it can optionally be erased every time new code is uploaded. This is controlled by the EESAVE fuse bit. On AVR DA and DB parts, this is a "safe" fuse and is set on all uploads. On AVR DD and ATTiny parts, it is not considered a safe fuse, since it can disable non-HV UPDI programming; on those parts you must do "burn bootloader" to apply these changes.
+
+See also the [USERSIG](../USERSIG/README.md) library which writes to the rather similar memory section known as the USERROW (aka "user signature space"), which is only erased if manually erased or if the chip is locked, and then erased in order to unlock it. Note that there are significant differences in the USERSIG library on tinyAVR and AVR Dx-series parts due to underlying differences in the NVM controller.
+
 ## How to use it
 The EEPROM library is included with all hardware packages for hardware with that functionality (which is almost universal).
 
 ```Arduino
 #include <EEPROM.h>
 
-void setup(){
+void setup() {
 
 }
 
-void loop(){
+void loop() {
 
 }
 
@@ -39,43 +45,43 @@ The library provides a global variable named `EEPROM`, you use this variable to 
 | tinyAVR 0/1/2-series 16-32k flash   |        256b |             4 ms |
 | megaAVR 0-series (all flash sizes)  |        256b |             4 ms |
 | DA, DB, EA-series (all flash sizes) |        512b |        11 ms (?) |
-| DA, DB, EA-series (all flash sizes) |        512b |             TBD  |
-| DD-series (all flash sizes)         |        256b |             TBD  |
+| DD-series (all flash sizes)         |        256b | TBD-likely 11 ms |
+| EA-series (all flash sizes)         |        512b |              TBD |
 
-Specifying an address beyond the size of the EEPROM will wrap around to the beginning.
+Specifying an address beyond the size of the EEPROM will wrap around to the beginning. The addresses passed to EEPROM functions are a `uint8_t` (aka byte) on parts with up to 256b of flash and a `uint16_t` (word or unsigned int) on parts with more.
 
 You can view all the examples [here](examples/).
 
 ## Library functions
 
-### `EEPROM.read( address )` [[_example_]](examples/eeprom_read/eeprom_read.ino)
+### `EEPROM.read(address)` [[_example_]](examples/eeprom_read/eeprom_read.ino)
 
 This function allows you to read a single byte of data from the eeprom.
 Its only parameter is an `int` which should be set to the address you wish to read.
 
 The function returns an `unsigned char` containing the value read.
 
-### `EEPROM.write( address, value )` [[_example_]](examples/eeprom_write/eeprom_write.ino)
+### `EEPROM.write(address, value)` [[_example_]](examples/eeprom_write/eeprom_write.ino)
 
 The `write()` method allows you to write a single byte of data to the EEPROM.
 Two parameters are needed. The first is an `int` containing the address that is to be written, and the second is a the data to be written (`unsigned char`).
 
 This function does not return any value.
 
-### `EEPROM.update( address, value )` [[_example_]](examples/eeprom_update/eeprom_update.ino)
+### `EEPROM.update(address, value)` [[_example_]](examples/eeprom_update/eeprom_update.ino)
 
 This function is similar to `EEPROM.write()` however this method will only write data if the cell contents pointed to by `address` is different to `value`. This method can help prevent unnecessary wear on the EEPROM cells.
 
 This function does not return any value.
 
-### `EEPROM.get( address, object )` [[_example_]](examples/eeprom_get/eeprom_get.ino)
+### `EEPROM.get(address, object)` [[_example_]](examples/eeprom_get/eeprom_get.ino)
 
 This function will retrieve any object from the EEPROM.
 Two parameters are needed to call this function. The first is an `int` containing the address that is to be written, and the second is the object you would like to read.
 
 This function returns a reference to the `object` passed in. It does not need to be used and is only returned for conveience.
 
-### `EEPROM.put( address, object )` [[_example_]](examples/eeprom_put/eeprom_put.ino)
+### `EEPROM.put(address, object)` [[_example_]](examples/eeprom_put/eeprom_put.ino)
 
 This function will write any object to the EEPROM.
 Two parameters are needed to call this function. The first is an `int` containing the address that is to be written, and the second is the object you would like to write.
@@ -94,15 +100,15 @@ This operator returns a reference to the EEPROM cell.
 ```c++
 unsigned char val;
 
-//Read first EEPROM cell.
-val = EEPROM[ 0 ];
+// Read first EEPROM cell.
+val = EEPROM[0];
 
-//Write first EEPROM cell.
-EEPROM[ 0 ] = val;
+// Write first EEPROM cell.
+EEPROM[0] = val;
 
-//Compare contents
-if( val == EEPROM[ 0 ] ){
-  //Do something...
+// Compare contents
+if(val == EEPROM[0]) {
+  // Do something...
 }
 ```
 
@@ -123,11 +129,11 @@ Its purpose is to mimic a typical byte of RAM, however its storage is the EEPROM
 This class has an overhead of two bytes, similar to storing a pointer to an EEPROM cell.
 
 ```C++
-EERef ref = EEPROM[ 10 ]; //Create a reference to 11th cell.
+EERef ref = EEPROM[10]; // Create a reference to 11th cell.
 
-ref = 4; //write to EEPROM cell.
+ref = 4; // write to EEPROM cell.
 
-unsigned char val = ref; //Read referenced cell.
+unsigned char val = ref; // Read referenced cell.
 ```
 
 ### `EEPtr` class
@@ -137,13 +143,13 @@ Just like a normal pointer type, this type can be dereferenced and repositioned 
 increment/decrement operators.
 
 ```C++
-EEPtr ptr = 10; //Create a pointer to 11th cell.
+EEPtr ptr = 10; // Create a pointer to 11th cell.
 
-*ptr = 4; //dereference and write to EEPROM cell.
+*ptr = 4; // dereference and write to EEPROM cell.
 
-unsigned char val = *ptr; //dereference and read.
+unsigned char val = *ptr; // dereference and read.
 
-ptr++; //Move to next EEPROM cell.
+ptr++; // Move to next EEPROM cell.
 ```
 
 ### `EEPROM.begin()`
