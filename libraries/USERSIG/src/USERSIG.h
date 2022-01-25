@@ -130,7 +130,7 @@ struct USRef {
     return --(*this), ret;
   }
 
-  uint8_t index; //Index of current USERSIG cell.
+  uint8_t index; // Index of current USERSIG cell.
 };
 
 /* USPtr class.
@@ -213,7 +213,7 @@ uint8_t __USigread(uint8_t idx) {
 }
 
 uint8_t __USigreadraw(uint8_t idx) {
-  return *((volatile uint8_t*) USER_SIGNATURES_START + idx);
+  return *((volatile uint8_t *) USER_SIGNATURES_START + idx);
 }
 
 int8_t __USigwrite(uint8_t idx, uint8_t data) {
@@ -247,7 +247,7 @@ int8_t __USigwriteraw(uint8_t idx, uint8_t data) {
   cli();
   _PROTECTED_WRITE(NVMCTRL.CTRLA, NVMCTRL_CMD_NOOP_gc);
   _PROTECTED_WRITE(NVMCTRL.CTRLA, NVMCTRL_CMD_FLWR_gc);
-  *((volatile uint8_t* ) USER_SIGNATURES_START + idx) = data;
+  *((volatile uint8_t *) USER_SIGNATURES_START + idx) = data;
   SREG = oldSREG;
   return 1;
 }
@@ -298,7 +298,7 @@ int8_t __USigflush(uint8_t justerase) {
 
 struct USERSIGClass {
 
-  //Basic user access methods.
+  // Basic user access methods.
   USRef operator[](const int idx)    {
     return idx;
   }
@@ -338,7 +338,7 @@ struct USERSIGClass {
   // Functionality to 'get' and 'put' objects to and from USERROW.
   template< typename T > T &get(int idx, T &t) {
     uint8_t *ptr = (uint8_t *) &t;
-    for (int count = sizeof(T) ; count ; --count) {
+    for (int count = sizeof(T); count; --count) {
       *ptr++ = __USigread(idx++);
     }
     return t;
@@ -346,7 +346,7 @@ struct USERSIGClass {
 
   template< typename T > const T &put(int idx, const T &t) {
     const uint8_t *ptr = (const uint8_t *) &t;
-    for (int count = sizeof(T) ; count ; --count) {
+    for (int count = sizeof(T); count; --count) {
       __USigwrite(idx++, *ptr++);   // Write the new byte with __USigwrite()
       if (sizeof(T) > 4) {          // if we are writing something that's not a primitive
         __USigflush(0);             // we will automatically commit
