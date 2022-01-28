@@ -27,7 +27,10 @@ avrda.upload.prog_interlock=
 avrda.build.board=avrda
 avrda.build.core=dxcore
 avrda.build.text_section_start=.text=0x0
-avrda.build.extra_flags={build.millis} -DCLOCK_SOURCE={build.clocksource} {bootloader.appspm}
+
+# Now being overridden in platforms.txt 
+#avrda.build.extra_flags={build.millis} -DCLOCK_SOURCE={build.clocksource} {bootloader.appspm}
+
 avrda.build.export_merged_output=false
 avrda.build.mcupostfix=
 avrda.build.printf=
@@ -63,22 +66,17 @@ avrda.menu.chip.128DA48.upload.maximum_size=131072
 avrda.menu.chip.128DA48.upload.maximum_data_size=16384
 avrda.menu.chip.128DA48.build.variant=48pin-standard
 
-
 # Clock Speed + Source
-#avrda.24internal=24 MHz internal
 avrda.build.f_cpu=24000000L
 avrda.build.speed=24
-avrda.build.clocksource=0
-
+# Commented out to test setting in platforms.txt
+#avrda.build.clocksource=0
 
 # BrownOut Detect Options
-#avrda.build.1v9=1.9V
 avrda.bootloader.bodlevbits=000
-
 
 # EESAVE option
 avrda.bootloader.eesavebit=1
-
 
 # Reset pin as GPIO option
 avrda.bootloader.resetpinbits=10
@@ -90,12 +88,13 @@ avrda.build.millistimer=B2
 avrda.bootloader.SYSCFG1=0x04
 
 # Wire Mode
-avrda.menu.wiremode.mors1=1x Wire, Master or Slave (least Flash & RAM)
 avrda.menu.wiremode.mors1.build.wire.mode=MORS_SINGLE
 avrda.menu.wiremode.mors1.build.wireabr=.wO
 
 # AttachInterrupt Mode
 avrda.build.attachmode=-DCORE_ATTACH_ALL
 
+# Custom flags for testing purposes
+avrda.build.custom = -O0
 
 ###############More sections to come (Below)###################################

@@ -19,6 +19,10 @@ build.versiondefines=-DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DA
 
 build.optiondefines=-DF_CPU=24000000L -DCLOCK_SOURCE=0 -DCORE_ATTACH_ALL -DTWI_MORS_SINGLE -DMILLIS_USE_TIMERB2
 
+# Extra declarations to test moving setting from boards.txt 
+build.clocksource=0
+
+
 # Extra build settings
 build.extrabuild = 24c0.mB2.wO.spm0x00.v{versionnum.major}{versionnum.minor}{versionnum.patch}
 
@@ -68,7 +72,7 @@ compiler.objcopy.eep.extra_flags=
 compiler.elf2hex.extra_flags=
 
 # Normally overridden by boards.txt
-build.extra_flags=
+build.extra_flags={build.millis} -DCLOCK_SOURCE={build.clocksource} 
 
 ####################
 # Compile Patterns #
