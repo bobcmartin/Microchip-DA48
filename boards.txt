@@ -97,4 +97,335 @@ avrda.build.attachmode=-DCORE_ATTACH_ALL
 # Custom flags for testing purposes
 avrda.build.custom = -O0
 
-###############More sections to come (Below)###################################
+
+################################
+#  AVR-DB Settings             #
+################################
+
+
+# Parameters and defaults for DB parts 
+avrdb.upload.tool=avrdude
+avrdb.upload.prog_interlock=
+avrdb.build.board=avrdb
+avrdb.build.core=dxcore
+avrdb.build.f_cpu={build.speed}000000L
+avrdb.build.text_section_start=.text=0x0
+avrdb.build.extra_flags= {bootloader.appspm}
+avrdb.build.export_merged_output=false
+avrdb.build.mcupostfix=
+avrdb.build.printf=
+
+
+# Bootloading parameters and fuses       
+avrdb.bootloader.tool=avrdude
+avrdb.bootloader.WDTCFG=0x00
+avrdb.bootloader.BODCFG=0b{bootloader.bodlevbits}{bootloader.bodmodebits}
+avrdb.bootloader.SYSCFG0=0b1100{bootloader.resetpinbits}0{bootloader.eesavebit}
+avrdb.bootloader.SYSCFG1=0b000{bootloader.mviobits}{bootloader.sutbits}
+#avrdb.bootloader.SYSCFG1=0b00001{bootloader.sutbits}
+avrdb.bootloader.CODESIZE=0x00
+avrdb.bootloader.BOOTSIZE=0x01
+avrdb.bootloader.avrdudestring=
+avrdb.bootloader.pymcuprogstring=-aerase
+
+
+# Exported hex/lst/map names will        #
+# indicate selected options. These       #
+# are only to do that, nothing else      #
+
+avrdb.build.mcupostfix=
+avrdb.build.printfabr=
+avrdb.build.attachabr=
+avrdb.build.wireabr=
+avrdb.build.appspmabr=.spm{bootloader.CODESIZE}
+
+
+# AVR-DB submenu options                     
+
+# Chip (memory and pincount)             
+avrdb.menu.chip.avr128db48=AVR128DB48
+avrdb.menu.chip.avr128db48.build.mcu=avr128db48
+avrdb.menu.chip.avr128db48.upload.maximum_size=131072
+avrdb.menu.chip.avr128db48.upload.maximum_data_size=16384
+avrdb.menu.chip.avr128db48.build.variant=48pin-standard
+
+
+
+
+# Clock speed and source options         
+avrdb.menu.clock.24internal=24 MHz internal
+avrdb.menu.clock.24internal.build.speed=24
+avrdb.menu.clock.24internal.build.clocksource=0
+avrdb.menu.clock.20internal=20 MHz internal
+avrdb.menu.clock.20internal.build.speed=20
+avrdb.menu.clock.20internal.build.clocksource=0
+avrdb.menu.clock.16internal=16 MHz internal
+avrdb.menu.clock.16internal.build.speed=16
+avrdb.menu.clock.16internal.build.clocksource=0
+avrdb.menu.clock.12internal=12 MHz internal
+avrdb.menu.clock.12internal.build.speed=12
+avrdb.menu.clock.12internal.build.clocksource=0
+avrdb.menu.clock.10internal=10 MHz internal
+avrdb.menu.clock.10internal.build.speed=10
+avrdb.menu.clock.10internal.build.clocksource=0
+avrdb.menu.clock.8internal=8 MHz internal
+avrdb.menu.clock.8internal.build.speed=8
+avrdb.menu.clock.8internal.build.clocksource=0
+avrdb.menu.clock.4internal=4 MHz internal
+avrdb.menu.clock.4internal.build.speed=4
+avrdb.menu.clock.4internal.build.clocksource=0
+avrdb.menu.clock.1internal=1 MHz internal
+avrdb.menu.clock.1internal.build.speed=1
+avrdb.menu.clock.1internal.build.clocksource=0
+avrdb.menu.clock.24crystal=24 MHz crystal
+avrdb.menu.clock.24crystal.build.speed=24
+avrdb.menu.clock.24crystal.build.clocksource=1
+avrdb.menu.clock.20crystal=20 MHz crystal
+avrdb.menu.clock.20crystal.build.speed=20
+avrdb.menu.clock.20crystal.build.clocksource=1
+avrdb.menu.clock.16crystal=16 MHz crystal
+avrdb.menu.clock.16crystal.build.speed=16
+avrdb.menu.clock.16crystal.build.clocksource=1
+avrdb.menu.clock.12crystal=12 MHz crystal
+avrdb.menu.clock.12crystal.build.speed=12
+avrdb.menu.clock.12crystal.build.clocksource=1
+avrdb.menu.clock.8crystal=8 MHz crystal
+avrdb.menu.clock.8crystal.build.speed=8
+avrdb.menu.clock.8crystal.build.clocksource=1
+avrdb.menu.clock.24extclock=24 MHz ext. clock
+avrdb.menu.clock.24extclock.build.speed=24
+avrdb.menu.clock.24extclock.build.clocksource=2
+avrdb.menu.clock.20extclock=20 MHz ext. clock
+avrdb.menu.clock.20extclock.build.speed=20
+avrdb.menu.clock.20extclock.build.clocksource=2
+avrdb.menu.clock.16extclock=16 MHz ext. clock
+avrdb.menu.clock.16extclock.build.speed=16
+avrdb.menu.clock.16extclock.build.clocksource=2
+avrdb.menu.clock.12extclock=12 MHz ext. clock
+avrdb.menu.clock.12extclock.build.speed=12
+avrdb.menu.clock.12extclock.build.clocksource=2
+avrdb.menu.clock.8extclock=8 MHz ext. clock
+avrdb.menu.clock.8extclock.build.speed=8
+avrdb.menu.clock.8extclock.build.clocksource=2
+avrdb.menu.clock.28internal=28 MHz internal (overclocked)
+avrdb.menu.clock.28internal.build.speed=28
+avrdb.menu.clock.28internal.build.clocksource=0
+avrdb.menu.clock.32internal=32 MHz internal (overclocked)
+avrdb.menu.clock.32internal.build.speed=32
+avrdb.menu.clock.32internal.build.clocksource=0
+avrdb.menu.clock.25crystal=25 MHz crystal (slightly overclocked)
+avrdb.menu.clock.25crystal.build.speed=25
+avrdb.menu.clock.25crystal.build.clocksource=1
+avrdb.menu.clock.27crystal=27 MHz crystal (overclocked)
+avrdb.menu.clock.27crystal.build.speed=27
+avrdb.menu.clock.27crystal.build.clocksource=1
+avrdb.menu.clock.28crystal=28 MHz crystal (overclocked)
+avrdb.menu.clock.28crystal.build.speed=28
+avrdb.menu.clock.28crystal.build.clocksource=1
+avrdb.menu.clock.30crystal=30 MHz ext. clock (overclocked)
+avrdb.menu.clock.30crystal.build.speed=30
+avrdb.menu.clock.30crystal.build.clocksource=1
+avrdb.menu.clock.32crystal=32 MHz crystal (overclocked)
+avrdb.menu.clock.32crystal.build.speed=32
+avrdb.menu.clock.32crystal.build.clocksource=1
+avrdb.menu.clock.36crystal=36 MHz crystal (overclocked)
+avrdb.menu.clock.36crystal.build.speed=36
+avrdb.menu.clock.36crystal.build.clocksource=1
+avrdb.menu.clock.40crystal=40 MHz crystal (overclocked)
+avrdb.menu.clock.40crystal.build.speed=40
+avrdb.menu.clock.40crystal.build.clocksource=1
+avrdb.menu.clock.25extclock=25 MHz ext. clock (slightly overclocked)
+avrdb.menu.clock.25extclock.build.speed=25
+avrdb.menu.clock.25extclock.build.clocksource=2
+avrdb.menu.clock.27extclock=27 MHz ext. clock (overclocked)
+avrdb.menu.clock.27extclock.build.speed=27
+avrdb.menu.clock.27extclock.build.clocksource=2
+avrdb.menu.clock.28extclock=28 MHz ext. clock (overclocked)
+avrdb.menu.clock.28extclock.build.speed=28
+avrdb.menu.clock.28extclock.build.clocksource=2
+avrdb.menu.clock.30extclock=30 MHz ext. clock (overclocked)
+avrdb.menu.clock.30extclock.build.speed=30
+avrdb.menu.clock.30extclock.build.clocksource=2
+avrdb.menu.clock.32extclock=32 MHz ext. clock (overclocked)
+avrdb.menu.clock.32extclock.build.speed=32
+avrdb.menu.clock.32extclock.build.clocksource=2
+avrdb.menu.clock.36extclock=36 MHz ext. clock (overclocked)
+avrdb.menu.clock.36extclock.build.speed=36
+avrdb.menu.clock.36extclock.build.clocksource=2
+avrdb.menu.clock.40extclock=40 MHz ext. clock (overclocked)
+avrdb.menu.clock.40extclock.build.speed=40
+avrdb.menu.clock.40extclock.build.clocksource=2
+avrdb.menu.clock.48extclock=48 MHz ext. clock (WAY overclocked)
+avrdb.menu.clock.48extclock.build.speed=48
+avrdb.menu.clock.48extclock.build.clocksource=2
+
+
+
+# BrownOut detection (BOD) options       
+avrdb.menu.bodvoltage.1v9=1.9V
+avrdb.menu.bodvoltage.1v9.bootloader.bodlevbits=000
+avrdb.menu.bodvoltage.2v45=2.45V
+avrdb.menu.bodvoltage.2v45.bootloader.bodlevbits=001
+avrdb.menu.bodvoltage.2v70=2.70V
+avrdb.menu.bodvoltage.2v70.bootloader.bodlevbits=010
+avrdb.menu.bodvoltage.2v85=2.85V
+avrdb.menu.bodvoltage.2v85.bootloader.bodlevbits=011
+avrdb.menu.bodmode.disabled=Disabled/Disabled
+avrdb.menu.bodmode.enabled=Enabled/Enabled
+avrdb.menu.bodmode.ensampfast=Enabled/Sampled (128 Hz)
+avrdb.menu.bodmode.ensampslow=Enabled/Sampled (32 Hz)
+avrdb.menu.bodmode.sampledfast=Sampled/Sampled (128 Hz)
+avrdb.menu.bodmode.sampledslow=Sampled/Sampled (32 Hz)
+avrdb.menu.bodmode.sampdisfast=Sampled/Disabled (128 Hz)
+avrdb.menu.bodmode.sampdisslow=Sampled/Disabled (32 Hz)
+avrdb.menu.bodmode.endisholdwake=Enabled hold wakeup/Disabled
+avrdb.menu.bodmode.disabled.bootloader.BODCFG=0x00
+avrdb.menu.bodmode.enabled.bootloader.bodmodebits=00101
+avrdb.menu.bodmode.ensampfast.bootloader.bodmodebits=00110
+avrdb.menu.bodmode.ensampslow.bootloader.bodmodebits=10110
+avrdb.menu.bodmode.samplefast.bootloader.bodmodebits=01010
+avrdb.menu.bodmode.sampleslow.bootloader.bodmodebits=11010
+avrdb.menu.bodmode.sampdisfast.bootloader.bodmodebits=01000
+avrdb.menu.bodmode.sampdisslow.bootloader.bodmodebits=11000
+avrdb.menu.bodmode.endisholdwake.bootloader.bodmodebits=01100
+
+
+# Retain EEPROM (EESAVE)                 
+
+avrdb.menu.eesave.enable=EEPROM retained
+avrdb.menu.eesave.enable.bootloader.eesavebit=1
+avrdb.menu.eesave.disable=EEPROM not retained
+avrdb.menu.eesave.disable.bootloader.eesavebit=0
+
+# Reset pin as input option              
+
+avrdb.menu.resetpin.reset=Hardware Reset (recommended)
+avrdb.menu.resetpin.reset.bootloader.resetpinbits=10
+avrdb.menu.resetpin.input=Input (no output, ever)
+avrdb.menu.resetpin.input.bootloader.resetpinbits=00
+
+
+# millis/micros timing source            
+
+avrdb.menu.millis.tcb2=TCB2 (recommended)
+avrdb.menu.millis.disabled=Disabled (delay() only)
+avrdb.menu.millis.tcb0=TCB0
+avrdb.menu.millis.tcb1=TCB1
+avrdb.menu.millis.tcb3=TCB3 (48/64-pin parts only)
+avrdb.menu.millis.tcb4=TCB4 (64-pin parts only)
+avrdb.menu.millis.tca0=TCA0
+avrdb.menu.millis.tca1=TCA1 (48/64-pin parts only)
+#avrdb.menu.millis.tcd0=TCD0
+avrdb.menu.millis.tcb0.build.millistimer=B0
+avrdb.menu.millis.tcb1.build.millistimer=B1
+avrdb.menu.millis.tcb2.build.millistimer=B2
+avrdb.menu.millis.tcb3.build.millistimer=B3
+avrdb.menu.millis.tcb4.build.millistimer=B4
+avrdb.menu.millis.tca0.build.millistimer=A0
+avrdb.menu.millis.tca1.build.millistimer=A1
+#avrdb.menu.millis.tcd0.build.millistimer=D0
+avrdb.menu.millis.disabled.build.millistimer=NONE
+
+
+# printf() version options               
+
+avrdb.menu.printf.default=Default, 1.5k flash, no floats
+avrdb.menu.printf.default.build.printf=
+avrdb.menu.printf.full=Full, 2.6k, prints floats
+avrdb.menu.printf.full.build.printf=-Wl,-u,vfprintf -lprintf_flt
+avrdb.menu.printf.full.build.printfabr=.pfF
+avrdb.menu.printf.minimal=Minimal, 1.1k flash used
+avrdb.menu.printf.minimal.build.printf=-Wl,-u,vfprintf -lprintf_min
+avrdb.menu.printf.minimal.build.printfabr=.pfM
+
+
+# attachInterrupt Mode                   
+
+avrdb.menu.attach.allenabled=On all pins, like usual
+avrdb.menu.attach.allenabled.build.attachmode=-DCORE_ATTACH_ALL
+avrdb.menu.attach.manual=Only enabled ports. Please see documentation.
+avrdb.menu.attach.manual.build.attachmode=-DCORE_ATTACH_NONE
+avrdb.menu.attach.oldversion=Old version, new one is worse!
+avrdb.menu.attach.oldversion.build.attachmode=-DCORE_ATTACH_OLD
+avrdb.menu.attach.manual.build.attachabr=.aMan
+avrdb.menu.attach.oldversion.build.attachabr=.aOld
+
+
+# MVIO menu                              
+
+avrdb.menu.mvio.enabled=Enabled
+avrdb.menu.mvio.enabled.bootloader.mviobits=01
+avrdb.menu.mvio.disabled=Disabled
+avrdb.menu.mvio.disabled.bootloader.mviobits=10
+
+
+# Startup time options                   
+
+avrdb.menu.startuptime.8=8ms
+avrdb.menu.startuptime.0=0ms
+avrdb.menu.startuptime.1=1ms
+avrdb.menu.startuptime.2=2ms
+avrdb.menu.startuptime.4=4ms
+avrdb.menu.startuptime.16=16ms
+avrdb.menu.startuptime.32=32ms
+avrdb.menu.startuptime.64=64ms
+avrdb.menu.startuptime.0.bootloader.sutbits=000
+avrdb.menu.startuptime.1.bootloader.sutbits=001
+avrdb.menu.startuptime.2.bootloader.sutbits=010
+avrdb.menu.startuptime.4.bootloader.sutbits=011
+avrdb.menu.startuptime.8.bootloader.sutbits=100
+avrdb.menu.startuptime.16.bootloader.sutbits=101
+avrdb.menu.startuptime.32.bootloader.sutbits=110
+avrdb.menu.startuptime.64.bootloader.sutbits=111
+
+
+#         Wire Mode Selection         
+# To enable TWI1 or master+slave mode 
+
+avrdb.menu.wiremode.mors1=1x Wire, Master or Slave (least Flash & RAM)
+avrdb.menu.wiremode.mors1.build.wire.mode=MORS_SINGLE
+avrdb.menu.wiremode.mors1.build.wireabr=.wO
+avrdb.menu.wiremode.mands1=1x Wire, Master and Slave
+avrdb.menu.wiremode.mands1.build.wire.mode=MANDS_SINGLE
+avrdb.menu.wiremode.mands1.build.wireabr=.wA
+avrdb.menu.wiremode.mors2=2x Wire, Master or Slave (not available on 28-pin devices)
+avrdb.menu.wiremode.mors2.build.wire.mode=MORS_BOTH
+avrdb.menu.wiremode.mors2.build.wireabr=.wO2
+avrdb.menu.wiremode.mands2=2x Wire, Master and Slave (not available on 28-pin devices)
+avrdb.menu.wiremode.mands2.build.wire.mode=MANDS_BOTH
+avrdb.menu.wiremode.mands2.build.wireabr=.wA2
+
+
+# SPM (writing flash from app)           
+
+avrdb.menu.appspm.no=Disabled
+avrdb.menu.appspm.no.bootloader.appspm=
+avrdb.menu.appspm.no.build.appspmabr=
+avrdb.menu.appspm.no.bootloader.BOOTSIZE=0x00
+avrdb.menu.appspm.full=Anywhere
+avrdb.menu.appspm.full.bootloader.appspm=-DSPM_FROM_APP=-1
+avrdb.menu.appspm.full.build.appspmabr=.spmALL
+avrdb.menu.appspm.16plus=Above 16k
+avrdb.menu.appspm.16plus.bootloader.appspm=-DSPM_FROM_APP=32
+avrdb.menu.appspm.16plus.bootloader.CODESIZE=32
+avrdb.menu.appspm.24plus=Above 24k
+avrdb.menu.appspm.24plus.bootloader.appspm=-DSPM_FROM_APP=48
+avrdb.menu.appspm.24plus.bootloader.CODESIZE=48
+avrdb.menu.appspm.32plus=Above 32k (AVR128/64 only)
+avrdb.menu.appspm.32plus.bootloader.appspm=-DSPM_FROM_APP=64
+avrdb.menu.appspm.32plus.bootloader.CODESIZE=64
+avrdb.menu.appspm.48plus=Above 48k (AVR128/64 only)
+avrdb.menu.appspm.48plus.bootloader.appspm=-DSPM_FROM_APP=96
+avrdb.menu.appspm.48plus.bootloader.CODESIZE=96
+avrdb.menu.appspm.56plus=Above 56k (AVR128/64 only)
+avrdb.menu.appspm.56plus.bootloader.appspm=-DSPM_FROM_APP=112
+avrdb.menu.appspm.56plus.bootloader.CODESIZE=112
+avrdb.menu.appspm.64plus=Above 64k (AVR128 only)
+avrdb.menu.appspm.64plus.bootloader.appspm=-DSPM_FROM_APP=128
+avrdb.menu.appspm.64plus.bootloader.CODESIZE=128
+avrdb.menu.appspm.96plus=Above 96k (AVR128 only)
+avrdb.menu.appspm.96plus.bootloader.appspm=-DSPM_FROM_APP=192
+avrdb.menu.appspm.96plus.bootloader.CODESIZE=192
+avrdb.menu.appspm.112plus=Above 112k (AVR128 only)
+avrdb.menu.appspm.112plus.bootloader.appspm=-DSPM_FROM_APP=224
+avrdb.menu.appspm.112plus.bootloader.CODESIZE=224
