@@ -9,7 +9,7 @@ menu.chip=Chip
 
 # BOARD NAMES
 
-avrda.name=AVR DA-series
+avrda.name=AVR128DA48
 avrdb.name=AVR128DB48
 
 
