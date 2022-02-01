@@ -1,6 +1,7 @@
 # See: https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5-3rd-party-Hardware-specification
 
 # core name is currently dxcore. Find out if it should be. 
+# looking into issue causing package to not be pulled correctly
 
 
 menu.chip=Chip
