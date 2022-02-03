@@ -12,7 +12,7 @@
 				{
 					"name": "Team 25 core",
 					"architecture": "megaavr",
-					"version": "1.0.0",
+					"version": "1.0.1",
 					"category": "Contributed",
 					"url": "https://github.com/Emsloan/Microchip-DA48/archive/refs/heads/master.zip",
 					"archiveFileName": "Microchip-DA48-master.zip",
