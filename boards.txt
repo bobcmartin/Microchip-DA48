@@ -1,14 +1,12 @@
 # See: https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5-3rd-party-Hardware-specification
 
-
 menu.chip=Chip
 
 ##############################################################
 
 # BOARD NAMES
 
-avrda.name=AVR DA-series
-
+avrda.name=AVR128DA48 Curiosity Nano
 
 
 ##############################################################
@@ -27,9 +25,6 @@ avrda.upload.prog_interlock=
 avrda.build.board=avrda
 avrda.build.core=dxcore
 avrda.build.text_section_start=.text=0x0
-
-# Now being overridden in platforms.txt 
-#avrda.build.extra_flags={build.millis} -DCLOCK_SOURCE={build.clocksource} {bootloader.appspm}
 
 avrda.build.export_merged_output=false
 avrda.build.mcupostfix=
@@ -50,13 +45,12 @@ avrda.bootloader.avrdudestring=
 avrda.bootloader.pymcuprogstring=-aerase
 
 ################################
-# Tools Defaults               #
+# Tools Defaults  (AVR128-DA48)#
 ################################
 
 # App SPM
 avrda.bootloader.appspm=
 avrda.bootloader.BOOTSIZE=0x00
-
 
 # Chip (pins and memory size)
 
@@ -69,8 +63,6 @@ avrda.menu.chip.128DA48.build.variant=48pin-standard
 # Clock Speed + Source
 avrda.build.f_cpu=24000000L
 avrda.build.speed=24
-# Commented out to test setting in platforms.txt
-#avrda.build.clocksource=0
 
 # BrownOut Detect Options
 avrda.bootloader.bodlevbits=000
@@ -81,21 +73,9 @@ avrda.bootloader.eesavebit=1
 # Reset pin as GPIO option
 avrda.bootloader.resetpinbits=10
 
-avrda.build.millis=-DMILLIS_USE_TIMER{build.millistimer}
-avrda.build.millistimer=B2
-
 # Startup Time
 avrda.bootloader.SYSCFG1=0x04
 
-# Wire Mode
-avrda.menu.wiremode.mors1.build.wire.mode=MORS_SINGLE
-avrda.menu.wiremode.mors1.build.wireabr=.wO
-
-# AttachInterrupt Mode
-avrda.build.attachmode=-DCORE_ATTACH_ALL
-
-# Custom flags for testing purposes
-avrda.build.custom = -O0
 
 
 ################################

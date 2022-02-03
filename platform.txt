@@ -8,12 +8,12 @@
 ##############################
 # DxCore-related definitions #
 ##############################
-name=DxCore
+name=Microchip
 versionnum.major=1
 versionnum.minor=0
-versionnum.patch=0
+versionnum.patch=1
 versionnum.postfix=
-versionnum.released=1
+versionnum.released=0
 version={versionnum.major}.{versionnum.minor}.{versionnum.patch}{versionnum.postfix}
 build.versiondefines=-DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DDXCORE="{version}" -DDXCORE_MAJOR={versionnum.major}UL -DDXCORE_MINOR={versionnum.minor}UL -DDXCORE_PATCH={versionnum.patch}UL -DDXCORE_RELEASED={versionnum.released}
 
@@ -21,10 +21,9 @@ build.optiondefines=-DF_CPU=24000000L -DCLOCK_SOURCE=0 -DCORE_ATTACH_ALL -DTWI_M
 
 # Extra declarations to test moving setting from boards.txt 
 build.clocksource=0
+build.wireabr=.wO
+build.millis=-DMILLIS_USE_TIMERB2
 
-
-# Extra build settings
-build.extrabuild = 24c0.mB2.wO.spm0x00.v{versionnum.major}{versionnum.minor}{versionnum.patch}
 
 #####################
 # Compile Parameter #
@@ -125,10 +124,12 @@ recipe.objcopy.bin.pattern="{compiler.path}{compiler.elf2hex.cmd}" {compiler.elf
 ## Save hex
 # Needs to be specified separately, because otherwise some parts of it don't resolve for reasons I dont understand.
 recipe.output.tmp_file={build.project_name}.hex
-recipe.output.save_file={build.project_name}.{build.mcu}{build.mcupostfix}.{build.extrabuild}.hex
+recipe.output.save_file={build.project_name}.{build.mcu}{build.mcupostfix}.{build.speed}c{build.clocksource}.m{build.millistimer}{build.wireabr}{build.printfabr}{build.appspmabr}{build.attachabr}.v{versionnum.major}{versionnum.minor}{versionnum.patch}.hex
+
 
 ## Extra asset name (for .lst and .map output - doesn't fully resolve for .hex)
-build.extraassetname={build.project_name}.{build.mcu}{build.mcupostfix}.{build.extrabuild}
+build.extraassetname={build.project_name}.{build.mcu}{build.mcupostfix}.{build.speed}c{build.clocksource}.m{build.millistimer}{build.wireabr}{build.printfabr}{build.appspmabr}{build.attachabr}.v{versionnum.major}{versionnum.minor}{versionnum.patch}
+
 
 ## Create disassembler listing
 recipe.hooks.objcopy.postobjcopy.1.pattern.windows=cmd /C "{compiler.path}{compiler.objdump.cmd}" {compiler.objdump.flags} "{build.path}/{build.project_name}.elf" > "{build.path}/{build.project_name}.lst"
