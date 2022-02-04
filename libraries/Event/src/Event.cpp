@@ -125,7 +125,8 @@ Event& Event::get_channel(uint8_t ch_number) {
  * @param generator Event generator
  * @return Event& Event channel object used with this event generator
  */
-Event& Event::get_generator_channel(uint8_t generator) {
+Event& Event::get_generator_channel(gen::generator_t generator)
+{
   #if defined(EVSYS_CHANNEL0)
     if (Event0.generator_type == generator) {
       return Event0;
@@ -176,9 +177,67 @@ Event& Event::get_generator_channel(uint8_t generator) {
       return Event9;
     }
   #endif
-  else{
-    return Event_empty;
+  #if defined(EVSYS_CHANNEL0)
+    else
+      return Event_empty;
+  #endif
+}
+
+
+/**
+ * @brief Returns the event channel object used for a particular event generator Arduino pin
+ *
+ * @param generator_pin Event generator Arduino pin number
+ * @return Event& Event channel object used with this event generator
+ */
+Event& Event::get_generator_channel(uint8_t generator_pin)
+{
+  uint8_t port = digitalPinToPort(generator_pin);
+  uint8_t port_pin = digitalPinToBitPosition(generator_pin);
+
+  if(port != NOT_A_PIN && port_pin != NOT_A_PIN) {
+    uint8_t gen = 0x40 | (port & 0x01) << 3 | port_pin;
+    if(port == PA || port == PB) {
+      #if defined(EVSYS_CHANNEL0)
+        if(Event0.generator_type == gen)
+          return Event0;
+      #endif
+      #if defined(EVSYS_CHANNEL1)
+       else if(Event1.generator_type == gen)
+        return Event1;
+      #endif
+    } else if(port == PC || port == PD) {
+      #if defined(EVSYS_CHANNEL2)
+        if(Event2.generator_type == gen)
+          return Event2;
+      #endif
+      #if defined(EVSYS_CHANNEL3)
+        else if(Event3.generator_type == gen)
+          return Event3;
+      #endif
+    } else if(port == PE || port == PF) {
+      #if defined(EVSYS_CHANNEL4)
+        if(Event4.generator_type == gen)
+          return Event4;
+      #endif
+      #if defined(EVSYS_CHANNEL5)
+        else if(Event5.generator_type == gen)
+          return Event5;
+      #endif
+    }
+    #if defined(PIN_PG)
+    else if(port == PG) {
+      if(Event6.generator_type == gen)
+        return Event6;
+      else if(Event7.generator_type == gen)
+        return Event7;
+    }
+    #endif
   }
+
+  #if defined(EVSYS_CHANNEL0)
+    return Event_empty;
+  #endif
 }
 
 
@@ -209,7 +268,7 @@ void Event::set_generator(gen::generator_t event_generator) {
  * @brief Function that lets you use an Arduino pin as event generator.
  *        Note that you'll have to manually keep track of which event channel
  *        objects to use to make sure the passed Arduino pin is supported.
- *        A different approach is to use Event::set_generator_pin(), which
+ *        A different approach is to use Event::assign_generator_pin(), which
  *        automatically picks the correct event channel for you.
  *
  * @param pin_number Arduino pin number to use as event generator
@@ -226,8 +285,142 @@ void Event::set_generator(uint8_t pin_number) {
   }
 }
 
+
+
 /**
- * @brief Static member function that sets an Arduino pin number as event
+ * @brief Static member function that sets a port pin as event
+ *        generator and returns the object it has select as event channel.
+ *        It will always try to select the lowest channel number as possible.
+ *
+ * @param port Port to use as event generator
+ * @param port_pin Pin number on port to use as event generator
+ * @return Event& Event channel object used as the event channel. Returns the
+ *         Event_empty object if passed Arduino pin is invalid or no event
+ *         channel is available
+ */
+Event& Event::assign_generator_pin(uint8_t port, uint8_t port_pin) {
+  if(port != NOT_A_PIN && port_pin != NOT_A_PIN) {
+    #if !defined(MEGATINYCORE) // All non-tiny work one way.
+      uint8_t gen = 0x40 | (port & 0x01) << 3 | port_pin;
+      if(port == PA || port == PB) {
+        if(Event0.generator_type == gen::disable || Event0.generator_type == gen) {
+          Event0.generator_type = gen;
+          return Event0;
+        } else if(Event1.generator_type == gen::disable || Event1.generator_type == gen) {
+          Event1.generator_type = gen;
+          return Event1;
+        }
+      } else if(port == PC || port == PD) {
+        if(Event2.generator_type == gen::disable || Event2.generator_type == gen) {
+          Event2.generator_type = gen;
+          return Event2;
+        } else if(Event3.generator_type == gen::disable || Event3.generator_type == gen) {
+          Event3.generator_type = gen;
+          return Event3;
+        }
+      } else if(port == PE || port == PF) {
+        if(Event4.generator_type == gen::disable || Event4.generator_type == gen) {
+          Event4.generator_type = gen;
+          return Event4;
+        } else if(Event5.generator_type == gen::disable || Event5.generator_type == gen) {
+          Event5.generator_type = gen;
+          return Event5;
+        }
+      }
+      #if defined(PIN_PG0)
+        else if(port == PG) {
+          if(Event6.generator_type == gen::disable || Event6.generator_type == gen) {
+            Event6.generator_type = gen;
+            return Event6;
+          } else if(Event7.generator_type == gen::disable || Event7.generator_type == gen) {
+            Event7.generator_type = gen;
+            return Event7;
+          }
+        }
+      #endif
+    #elif MEGATINYCORE_SERIES == 2
+      if (port != PC) {
+        uint8_t gen = port_pin | (port == PA ? 0x40 : 0x48);
+        if (Event0.generator_type == gen::disable || Event0.generator_type == gen) {
+          Event0.generator_type = gen;
+          return Event0;
+        } else if (Event1.generator_type == gen::disable || Event1.generator_type == gen) {
+          Event1.generator_type = gen;
+          return Event1;
+        }
+      }
+      if (port != PB) {
+        uint8_t gen = port_pin | (port == PC ? 0x40 : 0x48);
+        if (Event2.generator_type == gen::disable || Event2.generator_type == gen) {
+          Event2.generator_type = gen;
+          return Event2;
+        } else if (Event3.generator_type == gen::disable || Event3.generator_type == gen) {
+          Event3.generator_type = gen;
+          return Event3;
+        }
+      }
+      if (port != PA) {
+        uint8_t gen = port_pin | (port == PB ? 0x40 : 0x48);
+        if (Event4.generator_type == gen::disable || Event4.generator_type == gen) {
+          Event4.generator_type = gen;
+          return Event4;
+        } else if (Event5.generator_type == gen::disable || Event5.generator_type == gen) {
+          Event5.generator_type = gen;
+          return Event5;
+        }
+      }
+    #else // Oh no, it's a 0/1-series!
+      // Prefer to use the more numerous async channels.
+      uint8_t gen = port_pin + 0x0A;
+      #if defined(PIN_PB0)
+        if (port == PA)
+      #endif
+        {
+          if (Event2.generator_type == gen::disable || Event2.generator_type == gen) {
+            Event2.generator_type = gen;
+            return Event2;
+          }
+          gen += 3;
+          if (Event0.generator_type == gen::disable || Event0.generator_type == gen) {
+            Event0.generator_type = gen;
+            return Event0;
+          }
+        }
+      if (port == PB) {
+        if (Event3.generator_type == gen::disable || Event3.generator_type == gen) {
+          Event3.generator_type = gen;
+          return Event3;
+        }
+        #if MEGATINYCORE_SERIES == 1 // No Event1 on 0-series
+          gen -= 2;
+          if (Event1.generator_type == gen::disable || Event1.generator_type == gen) {
+            Event1.generator_type = gen;
+            return Event1;
+          }
+        #endif
+      }
+      #if defined (PIN_PC0) // can't test if PORTx is defined - all are defined everywhere)
+        if (port == PC) {
+          #if MEGATINYCORE_SERIES == 1 // no event 4 on 0-series
+            if (Event4.generator_type == gen::disable || Event4.generator_type == gen) {
+              Event4.generator_type = gen;
+              return Event4;
+            }
+          #endif
+          gen -= 3;
+          if (Event0.generator_type == gen::disable || Event0.generator_type == gen) {
+            Event0.generator_type = gen;
+            return Event0;
+          }
+        }
+      #endif // PC-bearing parts end here
+    #endif // end of tiny 0/1 assign_generator_pin()
+  }
+  return Event_empty;
+}
+
+/**
+ * @brief Static member function that sets an Arduino pin as event
  *        generator and returns the object it has select as event channel.
  *        It will always try to select the lowest channel number as possible.
  *
@@ -236,235 +429,96 @@ void Event::set_generator(uint8_t pin_number) {
  *         Event_empty object if passed Arduino pin is invalid or no event
  *         channel is available
  */
-Event& Event::assign_generator_pin(uint8_t pin_number) {
+Event& Event::assign_generator_pin(uint8_t pin_number)
+{
   uint8_t port = digitalPinToPort(pin_number);
   uint8_t port_pin = digitalPinToBitPosition(pin_number);
-  return Event::assign_generator_pin(port, port_pin)
+  return Event::assign_generator_pin(port, port_pin);
 }
 
-Event& Event::assign_generator_pin(uint8_t port, uint8_t port_pin) {
-  if (port != NOT_A_PIN && port_pin != NOT_A_PIN) {
-    #if !defined(MEGATINYCORE)
-      uint8_t gen = 0x40 | (port & 0x01) << 3 | port_pin;
-      if (port == PA || port == PB) {
-        if (Event0.generator_type == gen::disable || Event0.generator_type == gen) {
-          Event0.generator_type = gen;
-          return Event0;
-        }
-        else if (Event1.generator_type == gen::disable || Event1.generator_type == gen) {
-          Event1.generator_type = gen;
-          return Event1;
-        }
-      }
-      else if (port == PC || port == PD) {
-        if (Event2.generator_type == gen::disable || Event2.generator_type == gen) {
-          Event2.generator_type = gen;
-          return Event2;
-        }
-        else if (Event3.generator_type == gen::disable || Event3.generator_type == gen) {
-          Event3.generator_type = gen;
-          return Event3;
-        }
-      }
-      else if (port == PE || port == PF) {
-        if (Event4.generator_type == gen::disable || Event4.generator_type == gen) {
-          Event4.generator_type = gen;
-          return Event4;
-        }
-        else if (Event5.generator_type == gen::disable || Event5.generator_type == gen) {
-          Event5.generator_type = gen;
-          return Event5;
-        }
-      }
-      #if defined(Dx_64_PINS)
-      else if (port == PG) {
-        if (Event6.generator_type == gen::disable || Event6.generator_type == gen) {
-          Event6.generator_type = gen;
-          return Event6;
-        }
-        else if (Event7.generator_type == gen::disable || Event7.generator_type == gen) {
-          Event7.generator_type = gen;
-          return Event7;
-        }
-      }
-      #endif
-    }
-    return Event_empty;
-  #elif MEGATINYCORE_SERIES == 2
-    // TODO: Much like above, except it's PA/PB, PB/PC, PC/PA
-  #else // Oh no, it's a 0/1-series!
-    // TODO: PA at one set of offsets, PB at another, then async channels have PA, PB or PC at yet a third offset
-    // and 0-series skips odd numbered channels and hence can't do events from PB at all.
-  #endif
-}
 
-Event& Event::assign_generator(gen::generator_t gen, uint8_t ch = 255) {
-  #if !defined(MEGATINYCORE) || MEGATINYCORE_SERIES == 2
-    if (ch != 255) { // this means it can only be the divided, pins, or disable,
-      if (gen == 0) {
-        // What the hell are they doing asking for disabled with a specific channel's constant?!
-        // They're doing it wrong, whatever it is. If you want a disabled channel, specify gen::disable not genN::disable
-        // I vote to just always return a failure because the request is nonsensical.
-        return Event_empty;
-      }
-      if (gen > 0x10) {
-        // pin generator - couldn't the asshole have called assign_generator_pin()?
-        // There is no standard way to get digital pin number from port and bit.
-        // But in assign_generator_pin(uint8_t) we have to convert to port and bit anyway
-        // so I split that up, calculate the port and bit position here, and call that.
-        #if !defined(MEGATINYCORE)
-          uint8_t port = ch & 0xFE + (gen & 0x08 ? 1 : 0);
-          uint8_t port_pin = gen & 0x07;
-        #elif (MEGATINYCORE_SERIES == 2) //2-series has PA/PB, PB/PC, PC/PA - it wraps around
-          uint8_t port = ch >> 1 + (gen & 0x08 ? 1 : 0);
-          if (port == 3) {
-            port = 0;
-          }
-          uint8_t port_pin = gen & 0x07;
-        #endif
-        return Event::assign_generator_pin(port,port_pin);
-      } else {
-        // This could only be an RTC channel
-        if (ch & 1) {
-          #if defined(EVSYS_CHANNEL9)
-            if (Event9.generator_type == gen::disable || Event9.generator_type == gen) {
-              Event9.generator_type = gen;
-              return Event9;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL7)
-            if (Event7.generator_type == gen::disable || Event7.generator_type == gen) {
-              Event7.generator_type = gen;
-              return Event7;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL5)
-            if (Event5.generator_type == gen::disable || Event5.generator_type == gen) {
-              Event5.generator_type = gen;
-              return Event5;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL3)
-            if (Event3.generator_type == gen::disable || Event3.generator_type == gen) {
-              Event3.generator_type = gen;
-              return Event3;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL1)
-            if (Event1.generator_type == gen::disable || Event1.generator_type == gen) {
-              Event1.generator_type = gen;
-              return Event1;
-            } else
-          #endif
-            return Event_empty;
-        } else {
-          #if defined(EVSYS_CHANNEL8)
-            if (Event8.generator_type == gen::disable || Event8.generator_type == gen) {
-              Event8.generator_type = gen;
-              return Event8;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL6)
-            if (Event6.generator_type == gen::disable || Event6.generator_type == gen) {
-              Event6.generator_type = gen;
-              return Event6;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL4)
-            if (Event4.generator_type == gen::disable || Event4.generator_type == gen) {
-              Event4.generator_type = gen;
-              return Event4;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL2)
-            if (Event2.generator_type == gen::disable || Event2.generator_type == gen) {
-              Event2.generator_type = gen;
-              return Event2;
-            } else
-          #endif
-          #if defined(EVSYS_CHANNEL0)
-            if (Event0.generator_type == gen::disable || Event0.generator_type == gen) {
-              Event0.generator_type = gen;
-              return Event0;
-            } else
-          #endif
-            return Event_empty;
-        }
-      }
-    } else { // otherwise it could be on any channel, so check if it's already live on a channel first
-      Event& chan=Event::get_event_channel(gen);
-      if (chan.get_channel_number() != 255) { // is this right?
-        return chan;
-      } else {
-        #if defined(EVSYS_CHANNEL9)
-          if (Event9.generator_type == gen::disable) {
-            Event9.generator_type = gen;
-            return Event9;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL8)
-          if (Event8.generator_type == gen::disable) {
-            Event8.generator_type = gen;
-            return Event8;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL7)
-          if (Event7.generator_type == gen::disable) {
-            Event7.generator_type = gen;
-            return Event7;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL6)
-          if (Event6.generator_type == gen::disable) {
-            Event6.generator_type = gen;
-            return Event6;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL5)
-          if (Event5.generator_type == gen::disable) {
-            Event5.generator_type = gen;
-            return Event5;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL4)
-          if (Event4.generator_type == gen::disable) {
-            Event4.generator_type = gen;
-            return Event4;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL3)
-          if (Event3.generator_type == gen::disable) {
-            Event3.generator_type = gen;
-            return Event3;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL2)
-          if (Event2.generator_type == gen::disable) {
-            Event2.generator_type = gen;
-            return Event2;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL1)
-          if (Event1.generator_type == gen::disable) {
-            Event1.generator_type = gen;
-            return Event1;
-          } else
-        #endif
-        #if defined(EVSYS_CHANNEL0)
-          if (Event0.generator_type == gen::disable) {
-            Event0.generator_type = gen;
-            return Event0;
-          } else
-        #endif
-          return chan; // if we're on this branch, we know chan is Event_empty.
-      }
-    }
-  #else
-    // It's a 0/1-series tinyAVR. The event system is a raging shitshow here, and everything has to be different. At least there are only 6 channels.
-    // or if the poor user is torturing themselves and using a 0-series, 3
-    // At least the RTC part is relatively less painful for these parts - 0-series doesn't have the option, and 1-series only has one option.
-    // Actually, the parts are so severely constrained a lot of these things simplify dramatically, but it's still a completely separate implementation
-  #endif
+/**
+ * @brief Static member function that takes a gen:: generator as a parameter and
+ * finds an available channel for it. Starts with the highest possible channel
+ * number, 7, and iterate down to 0
+ *
+ * @param event_generator generator to assign to an event channel
+ * @return Event& Reference to the event object the generator has been assigned to.
+ * Returns the Event_empty object if no generator has been assigned to a channel
+ */
+
+
+Event& Event::assign_generator(gen::generator_t event_generator)
+{
+  // Check if generator is already in use
+  Event& channel = Event::get_generator_channel(event_generator);
+  if(channel.get_channel_number() != 255)
+    return channel;
+
+  else
+  {
+    #if defined(EVSYS_CHANNEL9)
+      if(Event9.get_generator() == gen::disable) {
+        Event9.set_generator(event_generator);
+        return Event9;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL8)
+      if(Event8.get_generator() == gen::disable) {
+        Event8.set_generator(event_generator);
+        return Event8;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL7)
+      if(Event7.get_generator() == gen::disable) {
+        Event7.set_generator(event_generator);
+        return Event7;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL6)
+      if(Event6.get_generator() == gen::disable) {
+        Event6.set_generator(event_generator);
+        return Event6;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL5)
+      if(Event5.get_generator() == gen::disable) {
+        Event5.set_generator(event_generator);
+        return Event5;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL4)
+      if(Event4.get_generator() == gen::disable) {
+        Event4.set_generator(event_generator);
+        return Event4;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL3)
+      if(Event3.get_generator() == gen::disable) {
+        Event3.set_generator(event_generator);
+        return Event3;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL2)
+      if(Event2.get_generator() == gen::disable) {
+        Event2.set_generator(event_generator);
+        return Event2;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL1)
+      if(Event1.get_generator() == gen::disable) {
+        Event1.set_generator(event_generator);
+        return Event1;
+      } else
+    #endif
+    #if defined(EVSYS_CHANNEL0)
+      if(Event0.get_generator() == gen::disable) {
+        Event0.set_generator(event_generator);
+        return Event0;
+      } else
+    #endif
+    return channel; // if we're on this branch, we know chan is Event_empty
+  }
 }
 
 
@@ -558,21 +612,33 @@ Event& Event::get_user_channel(user::user_t event_user) {
 void Event::set_user(user::user_t event_user) {
   // Figure out what user register to write to based on the passed parameter
   uint8_t event_user_mask = event_user & 0x7F;
-  volatile uint8_t *user_register = &EVSYS_USERCCLLUT0A + (volatile uint8_t &)event_user_mask;
-
-  // Connect user to the channel we're working with
-  *user_register = channel_number + 1;
-
-  // Set PORTMUX pin swap for EVOUT if selected as channel generator
-  if (event_user & 0x80) {
-    #if defined(__AVR_ATmegax08__) || defined(__AVR_ATmegax09__)
-      PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x09));
-    #elif defined(__AVR_DA__)
-      PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x0E));
-    #elif defined(__AVR_DB__)
-      PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x0D));
-    #endif
-  }
+  #if defined(TINY_0_OR_1_SERIES)
+    volatile uint8_t *user_register = &EVSYS_ASYNCUSER0 + (volatile uint8_t &)event_user_mask;
+  #else
+    volatile uint8_t *user_register = &EVSYS_USERCCLLUT0A + (volatile uint8_t &)event_user_mask;
+  #endif
+    // Connect user to the channel we're working with
+    *user_register = channel_number + 1;
+    // Set PORTMUX pin swap for EVOUT if selected as channel generator
+  #if defined(TINY_0_OR_1_SERIES)
+    if (event_user >= 0x08 && event_user <= 0x0A) {
+      PORTMUX.CTRLA |= 1 << (event_user - 0x08);
+    }
+  #else
+    if (event_user & 0x80) {
+      #if defined(MEGACOREX)
+        PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x09));
+      #elif defined(__AVR_DA__)
+        PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x0E));
+      #elif defined(__AVR_DB__)
+        PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x0D));
+      #elif defined(__AVR_DD__)
+        PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x0D));
+      #elif MEGATINYCORE_SERIES == 2
+        PORTMUX_EVSYSROUTEA |= (1 << ((event_user & 0x7F) - 0x0D));
+      #endif
+    }
+  #endif
 }
 
 /**
@@ -588,53 +654,126 @@ int8_t Event::set_user_pin(uint8_t pin_number) {
   uint8_t port_pin = digitalPinToBitPosition(pin_number);
 
   int8_t event_user = -1;
-  // TODO: support DA/DB/DD series
-  // TODO: support tinyAVR parts
   if (port != NOT_A_PIN && port_pin != NOT_A_PIN) {
-    if (port == PA) {
-      if (port_pin == 2){
-        event_user = user::evouta_pin_pa2;
-      } else if (port_pin == 7){
-        event_user = user::evouta_pin_pa7;
-      }
+    /* Woah, we were missing a huge optimization opportunity here....
+       - The users are numbered in the same orderas the ports.
+       - PA is #defined as 0, PB as 2, etc.
+       - there are no parts for which a port exists that has a pin 2 or 7, but which does not allow that pin to be used as an event output, except for tiny 0/1, where only pin 2 is an option...
+       We basically **don't have to test the port** as long as it's a valid port as we just tested. This is probably like 6-8 instructions instead of several dozen */
+    uint8_t evout_user = (uint8_t) user::evouta_pin_pa2;
+    if (port_pin == 2) {
+      event_user = (user::user_t)(evout_user + port);
     }
-    #if defined(__AVR_ATmegax09__)
-      else if (port == PB) {
-        if (port_pin == 2){
-          event_user = user::evoutb_pin_pb2;
-        }
+    #if !defined(TINY_0_OR_1_SERIES)
+      else if (port_pin == 7) {
+        event_user = (user::user_t)(evout_user + port);
       }
+
     #endif
-    else if (port == PC) {
-      if (port_pin == 2){
-        event_user = user::evoutc_pin_pc2;
-      }
-      #if defined(__AVR_ATmegax09__)
-        else if (port_pin == 7){
-          event_user = user::evoutc_pin_pc7;
-        }
-      #endif
-    }
-    else if (port == PD) {
-      if (port_pin == 2)
-        event_user = user::evoutd_pin_pd2;
-      else if (port_pin == 7)
-        event_user = user::evoutd_pin_pd7;
-    }
-    #if defined(__AVR_ATmegax09__)
-      else if (port == PE) {
-        if (port_pin == 2)
-          event_user = user::evoute_pin_pe2;
-      }
-    #endif
-    else if (port == PF) {
-      if (port_pin == 2)
-        event_user = user::evoutf_pin_pf2;
+    else {
+      return -1;
     }
     set_user((user::user_t)event_user);
   }
   return event_user;
 }
+    /*
+    #if defined(MEGATINYCORE)
+      // megaTinyCore on 0/1-series only has EVOUT on pin 2
+      if (port_pin == 2) {
+        #if defined(PIN_PB2)
+          if (port == PA) {
+            event_user = user::evouta_pin_pa2;
+          if (port == PB)
+            event_user = user::evoutb_pin_pb2;
+           else
+            event_user = user::evoutb_pin_pc2;
+        #else // No PIN_PB2, meaning it could only be an 8-pin tiny, and the only evout pin there is PA2.
+          event_user = user::evouta_pin_pa2;
+        #endif
+      }
+      // 2-series gets the option for the alternate output pins... but there are only 2. faster + smaller to test directly.
+      #if (MEGATINYCORE_SERIES == 2)
+        #if defined(PIN_PB7)
+          if (pin_number == PIN_PB7){
+            event_user = user::evoutb_pin_pb2;
+          } else
+        #endif
+        if (pin_number == PIN_PA7) {
+          event_user = user::evoutb_pin_pb7
+        }
+      #endif
+    return event_user;
+    #else  // DONE WITH the tinyAVRs!
+    #if defined(PIN_PA2)             // 14-pin DD doesn't have PA2 or PA7. Nor will the DU14's
+      if (port == PA) {
+        if (port_pin == 2)
+          event_user = user::evouta_pin_pa2;
+        else if (port_pin == 7)
+          event_user = user::evouta_pin_pa7;
+      }
+    #endif
+    #if defined(PIN_PB2)
+      else if (port == PB) {
+        if (port_pin == 2) {
+          event_user = user::evoutb_pin_pb2;
+        }
+        #if defined(PIN_PB7)
+          if (port_pin == 7) {
+            event_user = user::evoutb_pin_pb7;
+          }
+        #endif
+      }
+    #endif
+    #if defined PIN_PC2 // DU-series sacrificed PORTC at the altar of native USB (along with their TCD+PLL and assorted other treasures)
+      else if (port == PC) {
+        if (port_pin == 2) {
+          event_user = user::evoutc_pin_pc2;
+        }
+        #if defined(PIN_PC7)
+          else if (port_pin == 7) {
+            event_user = user::evoutc_pin_pc7;
+          }
+        #endif
+      }
+    #endif
+    else if (port == PD) { /
+      #if defined(PIN_PD2) // 14 and 20 pin DD has no PD0-3, all megaAVR 0s do
+        if (port_pin == 2) {
+          event_user = user::evoutd_pin_pd2;
+        } else
+      #endif
+      if (port_pin == 7) {
+        event_user = user::evoutd_pin_pd7;
+      }
+    }
+    #if defined(PIN_PE2)
+      else if (port == PE) {
+        if (port_pin == 2){
+          event_user = user::evoute_pin_pe2;
+        }
+        #if defined(PIN_PE7)
+          else if (port_pin == 7) {
+            event_user = user::evoutc_pin_pc7;
+          }
+        #endif
+      }
+    #endif
+    else if (port == PF) {
+      if (port_pin == 2)
+        event_user = user::evoutf_pin_pf2;
+      }
+      #if defined(PIN_PF7)
+      else if (portpin == 7) {
+        event_user = user::evoutg_pin_pg7;
+      }
+    #if defined(PIN_PG2)
+      if (port_pin == 2)
+        event_user = user::evoutg_pin_pg2;
+      else if (port_pin == 7)
+        event_user = user::evoutg_pin_pg7;
+    #endif
+    */
 
 /**
  * @brief Clears/removed a user from a particular event channel if set
@@ -649,7 +788,7 @@ void Event::clear_user(user::user_t event_user) {
   // Disconnect from event generator
   *user_register = 0x00;
 
-  // Clear PORTMUX pin swap for EVOUT if selected as channel generator
+  // Clear PORTMUX pin swap for EVOUT if selected as channel user
   if (event_user & 0x80)  {
     #if defined(__AVR_ATmegax08__) || defined(__AVR_ATmegax09__)
       PORTMUX_EVSYSROUTEA &= ~(1 << ((event_user & 0x7F) - 0x09));
@@ -668,36 +807,30 @@ void Event::clear_user(user::user_t event_user) {
  */
 void Event::soft_event() {
   // Write to the bit that represent the channel in the strobe register
-  // TODO: Pull in support for tinyAVR 0/1-series
   #if defined(EVSYS_STROBE)
-    // megaAVR 0-series
+    // megaAVR 0-series calls the register EVSYS.STROBE
     EVSYS.STROBE = (1 << channel_number);
-  #elif defined (EVSYS_ASYNCCH0)
-    // tinyAVR 0/1-series
+  #elif defined(TINY_0_OR_1_SERIES)
+    // Channels 0 and 1 are the sync channels, which are strobbed with the syncstrobe registers. The others are the async channels,
+    // strobed with the asyncstrobe. Since the sync strobe has only 2 possible thing s to strobe, bit 0 or bit 1 corresponding to byte
+    // values 1 and 2, we can just add 1 to the byte value to achieve that.
     if (channel_number < 2) {
-      // channel_number is either 0 or 1, and we want to strobe the corresponding channel, so we want to write either 1 << 0 or 1 <<1.
-      // but that's the same as 0 + 1 or 1 + 1 for this very limited case, and it's either equal in size if the compiler is smart
-      // or potentially much worse if it's not. I'm seeing 3 instructions from 1 << channel number if it's smart, but potentially a lot
-      // more if it's stupid...
       EVSYS.SYNCSTROBE = (channel_number + 1);
     } else {
       EVSYS.ASYNCSTROBE = (1 << (channel_number - 2));
     }
   #else
-    // This is a civilized part which uses the 2020 version of EVSYS
-    // we expect there to be an EVSYS.SWEVENTA channel plus an
-    // EVSYS.SWEVENTB it it has more than 8 event channels.
+    // Everything newer calls the registers EVSYS.SWEVENTA or SWEVENTB for the few devices lucky enough to have more than 8 channels.
     #if defined(EVSYS_SWEVENTB)
       if (channel_number < 8) {
         EVSYS.SWEVENTA = (1 << channel_number);
       } else {
-        // for the special case of only 10 channels, this is smaller:
-        // channel number will be 8 or 9, so this will be 1 or 2
-        // whereas the compiler would need to prepare for anything in the
-        // otherwise.  No parts with more than 10 event channels exist or
-        // have been announced. Whereas for the tinies, I did this for
-        // size, here I do it more for speed, since these parts have
-        // enough flash that the penalty is barely measurable.
+        /* Dirty trick: No available part has more than 10 event channels.
+         * So if we are strobing one of those last two, the value we are writing to the register is iwith 1 or 2 (as with sync channel
+         * on tiny 0/1). So channel number is 8 or 9, subtract 7 to get 1 or 2, and write that.
+         * Doesn't save much flash,but variable-shift operations are surprisignly inefficient in speed. The case for SWEVENTA involves
+         * a loop, 5 clocks in duration per bit
+         */
         EVSYS.SWEVENTB = channel_number - 7;
       // EVSYS.SWEVENTB = (1 << (channel_number - 8));
       }
@@ -707,12 +840,308 @@ void Event::soft_event() {
   #endif
 }
 
+void Event::long_soft_event(uint8_t length) {
+  _long_soft_event(channel_number, length);
+}
+
+void Event::_long_soft_event(uint8_t channel, uint8_t length) {
+  uint16_t strobeaddr;
+  #if defined(EVSYS_STROBE)
+    strobeaddr = (uint16_t) &EVSYS_STROBE;
+  #elif defined(EVSYS_SYNCSTROBE)
+    if (channel >1)
+      strobeaddr = (uint16_t) &EVSYS_ASYNCSTROBE;
+    else
+      strobeaddr = (uint16_t) &EVSYS_SYNCSTROBE;
+  #elif defined(EVSYS_SWEVENTB)
+    if (channel > 7) {
+      channel -= 8;
+      strobeaddr = (uint16_t) &EVSYS_SWEVENTB;
+    } else
+      strobeaddr = (uint16_t) &EVSYS_SWEVENTA;
+  #elif defined(EVSYS_SWEVENTA)
+    strobeaddr = (uint16_t) &EVSYS_SWEVENTA;
+  #else
+    #error "Don't know the strobe register!"
+  #endif
+  channel = (1<<channel);
+  __asm__ __volatile__ (
+    "in r0, 0x3F"     "\n\t" // save SREG
+    "cli"             "\n\t" // interrupts off
+    "cpi %1, 4"       "\n\t"
+    "brcs long_soft2" "\n\t" // less than 4 -> 2
+    "breq long_soft4" "\n\t" // equal to 4 -> 4
+    "cpi %1, 10"      "\n\t" // compare with 8
+    "brcs long_soft6" "\n\t" // less than 10 (but more than 4) -> 6
+    "breq long_soft10""\n\t" // equal to 10 -> 10
+    "st Z, %0"        "\n\t" // otherwise they get 16.
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+  "long_soft10:"      "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+  "long_soft6:"       "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+  "long_soft4:"       "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+  "long_soft2:"       "\n\t"
+    "st Z, %0"        "\n\t"
+    "st Z, %0"        "\n\t"
+    "out 0x3f, r0"    "\n"   // restore SREG, reenabling interrupts.
+    ::"r"((uint8_t) channel),"d"((uint8_t) length),"z" ((uint16_t) strobeaddr));
+}
+
 
 /**
  * @brief Starts the event generator for a particular event channel
  *
  * @param state Optional parameter. Defaults to true
  */
+
+gen::generator_t Event::gen_from_peripheral(TCB_t& timer, uint8_t event_type) {
+  uint8_t gentype = -1;
+  #if defined(TINY_0_OR_1_SERIES)
+    badCall("gen_from_peripheral() does not support channel-specific generators. The TCBs on 0/1-series are.");
+  #else
+    #if !(defined(DXCORE) || defined(TINY_2_SERIES))  // Dx-series and 2-series have ovf event. Others dont.
+      if (event_type != 1) {
+        return (gen::generator_t) -1;
+      } else {
+        gentype = 0;
+      }
+    #else
+      if (event_type < 2) {
+        gentype = event_type;
+      }
+    #endif
+    if (&timer == &TCB0) {
+      gentype += (uint8_t) gen::tcb0_capt;
+    } else
+    #if (defined TCB1)
+    if (&timer == &TCB1) {
+      gentype += (uint8_t) gen::tcb1_capt;
+    } else
+    #endif
+    #if (defined TCB2)
+    if (&timer == &TCB2) {
+      gentype += (uint8_t) gen::tcb2_capt;
+    } else
+    #endif
+    #if (defined TCB3)
+    if (&timer == &TCB3) {
+      gentype += (uint8_t) gen::tcb3_capt;
+    } else
+    #endif
+    #if (defined TCB4)
+    if (&timer == &TCB4) {
+      gentype += (uint8_t) gen::tcb4_capt;
+    } else
+    #endif
+    {
+      gentype = -1;
+    }
+  #endif
+  return (gen::generator_t) gentype;
+}
+
+user::user_t Event::user_from_peripheral(TCB_t& timer, uint8_t user_type) {
+  uint8_t user = -1;
+  #if !(defined(DXCORE) || defined(TINY_2_SERIES)) // Dx-series and 2-series have event count input, others don't.
+    if (user_type != 1) {
+      return (user::user_t) -1;
+    } else {
+      user = 0;
+    }
+  #else
+    if (user_type < 2) {
+      user = user_type;
+    }
+  #endif
+  if (&timer == &TCB0) {
+    user += (uint8_t) user::tcb0_capt;
+  } else
+  #if (defined TCB1)
+  if (&timer == &TCB1) {
+    user += (uint8_t) user::tcb1_capt;
+  } else
+  #endif
+  #if (defined TCB2)
+  if (&timer == &TCB2) {
+    user += (uint8_t) user::tcb2_capt;
+  } else
+  #endif
+  #if (defined TCB3)
+  if (&timer == &TCB3) {
+    user += (uint8_t) user::tcb3_capt;
+  } else
+  #endif
+  #if (defined TCB4)
+  if (&timer == &TCB4) {
+    user += (uint8_t) user::tcb4_capt;
+  } else
+  #endif
+  {
+    user = -1;
+  }
+  return (user::user_t) user;
+}
+
+
+gen::generator_t Event::gen_from_peripheral(AC_t& comp)
+{
+  #if defined(TINY_1_16K_PLUS)
+    badCall("gen_from_peripheral() does not support channel-specific generators. The AC's larger 1-series are.");
+  #else
+    #if defined(AC0)
+      if (&comp == &AC0)
+        return gen::ac0_out;
+      else
+      #if defined(AC1)
+        if(&comp == &AC1)
+          return gen::ac1_out;
+        else
+        #endif
+      #if defined(AC2)
+      if(&comp == &AC2)
+        return gen::ac2_out;
+      #endif
+    #endif
+  #endif
+  return (gen::generator_t) -1;
+}
+
+gen::generator_t Event::gen_from_peripheral(CCL_t& logic, uint8_t logicblock) {
+  uint8_t retval = -1;
+  if (&logic == &CCL) {
+    #if defined(TINY_0_OR_1_SERIES)
+      if (logicblock < 2)
+    #elif defined(CCL_LUT4CTRLA)
+      if (logicblock < 6)
+    #else
+      if (logicblock < 4)
+    #endif
+    {
+      retval = logicblock + (uint8_t) (gen::ccl0_out);
+    }
+  }
+  return (gen::generator_t) retval;
+}
+
+user::user_t Event::user_from_peripheral(CCL_t& logic, uint8_t user_type) {
+  uint8_t retval = -1;
+  if (&logic == &CCL) {
+    #if !defined(TINY_0_OR_1_SERIES)
+      #if defined(CCL_TRUTH4)
+        if (user_type < 13)
+      #else
+        if (user_type < 9)
+      #endif
+      {
+        retval = user_type;
+      }
+    #else
+      if (user_type < 5) {
+        retval = user_type + 2;
+      }
+    #endif
+  }
+  return (user::user_t) retval;
+}
+
+
+gen::generator_t Event::gen_from_peripheral(TCA_t& timer, uint8_t event_type) {
+  uint8_t retval = -1;
+  if (event_type < 5) {
+    #if defined(TINY_0_OR_1_SERIES)
+      retval = event_type +2;
+    #else
+      if (&TCA0 == &timer) {
+        retval = event_type + 0x80;
+      }
+      #if defined(TCA1)
+        else if (&TCA1 == &timer) {
+          retval = event_type += 0x88;
+        }
+      #endif
+    #endif
+  }
+  return (gen::generator_t) retval;
+}
+
+user::user_t Event::user_from_peripheral(TCA_t& timer, uint8_t user_type) {
+  uint8_t user = -1;
+  #if !(defined(DXCORE) || defined(TINY_2_SERIES))
+    if (user_type != 0) {
+      return (user::user_t) -1;
+    }
+  #else
+    if (user_type > 1) {
+      return (user::user_t) -1;
+    }
+  #endif
+  user = user_type; // 0 or 1 for event user a or b (on parts with both, or 0 for parts hat only have one.
+  #if defined(TCA1)
+  if (&timer == &TCA1) {
+    user += 2;
+  } else
+  #endif
+  if (&timer != &TCA0) {
+    return (user::user_t) -1;
+  }
+  #if defined(__AVR_DA__)
+    user += 0x1B;
+  #elif defined(__AVR_DB__) || defined(__AVR_DD__)
+    user += 0x1A;
+  #elif defined (MEGACOREX)
+    user += 0x13;
+  #elif defined (TINY_2_SERIES)
+    user += 0x0E;
+  #else
+    user += 0x10;
+  #endif
+  return (user::user_t) user;
+}
+
+user::user_t Event::user_from_peripheral(USART_t& usart) {
+    if (&usart == &USART0) {
+      return user::usart0_irda;
+    }
+  #if defined(USART1)
+    else if (&usart == &USART1) {
+      return user::usart1_irda;
+    }
+  #endif
+  #if defined(USART2)
+    else if (&usart == &USART2) {
+      return user::usart2_irda;
+    }
+  #endif
+  #if defined(USART3)
+    else if (&usart == &USART3) {
+      return user::usart3_irda;
+    }
+  #endif
+  #if defined(USART4)
+    else if (&usart == &USART4) {
+      return user::usart4_irda;
+    }
+  #endif
+  #if defined(USART5)
+    else if (&usart == &USART5) {
+      return user::usart5_irda;
+    }
+  #endif
+  return (user::user_t) -1;
+}
+
+
 void Event::start(bool state) {
   if (state) {
     // Write event generator setting to EVSYS_CHANNELn register
