@@ -7,7 +7,7 @@ menu.chip=Chip
 # BOARD NAMES
 
 avrda.name=AVR128DA48 Curiosity Nano
-
+avrdb.name=AVR128DB48 Curiosity Nano
 
 ##############################################################
 
