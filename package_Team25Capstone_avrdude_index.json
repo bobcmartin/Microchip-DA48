@@ -21,6 +21,9 @@
 					"boards": [
 						{
 							"name": "AVR128DA48"
+						},
+						{
+							"name": "AVR128DB48"
 						}
 					],
 					"toolsDependencies": [
