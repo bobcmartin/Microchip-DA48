@@ -146,47 +146,9 @@ avrdb.menu.eesave.enable.bootloader.eesavebit=1
 avrdb.menu.eesave.disable=EEPROM not retained
 avrdb.menu.eesave.disable.bootloader.eesavebit=0
 
-# Reset pin as input option              
+# Reset pin as GPIO option             
 
-avrdb.menu.resetpin.reset=Hardware Reset (recommended)
-avrdb.menu.resetpin.reset.bootloader.resetpinbits=10
-avrdb.menu.resetpin.input=Input (no output, ever)
-avrdb.menu.resetpin.input.bootloader.resetpinbits=00
-
-
-# millis/micros timing source            
-
-avrdb.menu.millis.tcb2=TCB2 (recommended)
-avrdb.menu.millis.disabled=Disabled (delay() only)
-avrdb.menu.millis.tcb0=TCB0
-avrdb.menu.millis.tcb1=TCB1
-avrdb.menu.millis.tcb3=TCB3 (48/64-pin parts only)
-avrdb.menu.millis.tcb4=TCB4 (64-pin parts only)
-avrdb.menu.millis.tca0=TCA0
-avrdb.menu.millis.tca1=TCA1 (48/64-pin parts only)
-#avrdb.menu.millis.tcd0=TCD0
-avrdb.menu.millis.tcb0.build.millistimer=B0
-avrdb.menu.millis.tcb1.build.millistimer=B1
-avrdb.menu.millis.tcb2.build.millistimer=B2
-avrdb.menu.millis.tcb3.build.millistimer=B3
-avrdb.menu.millis.tcb4.build.millistimer=B4
-avrdb.menu.millis.tca0.build.millistimer=A0
-avrdb.menu.millis.tca1.build.millistimer=A1
-#avrdb.menu.millis.tcd0.build.millistimer=D0
-avrdb.menu.millis.disabled.build.millistimer=NONE
-
-
-# printf() version options               
-
-avrdb.menu.printf.default=Default, 1.5k flash, no floats
-avrdb.menu.printf.default.build.printf=
-avrdb.menu.printf.full=Full, 2.6k, prints floats
-avrdb.menu.printf.full.build.printf=-Wl,-u,vfprintf -lprintf_flt
-avrdb.menu.printf.full.build.printfabr=.pfF
-avrdb.menu.printf.minimal=Minimal, 1.1k flash used
-avrdb.menu.printf.minimal.build.printf=-Wl,-u,vfprintf -lprintf_min
-avrdb.menu.printf.minimal.build.printfabr=.pfM
-
+avrdb.bootloader.resetpinbits=10
 
 # attachInterrupt Mode                   
 
