@@ -140,54 +140,25 @@ avrdb.bootloader.bodlevbits=000
 
 
 # Retain EEPROM (EESAVE)                 
-
 avrdb.menu.eesave.enable=EEPROM retained
 avrdb.menu.eesave.enable.bootloader.eesavebit=1
 avrdb.menu.eesave.disable=EEPROM not retained
 avrdb.menu.eesave.disable.bootloader.eesavebit=0
 
 # Reset pin as GPIO option             
-
 avrdb.bootloader.resetpinbits=10
 
 # attachInterrupt Mode                   
-
-avrdb.menu.attach.allenabled=On all pins, like usual
-avrdb.menu.attach.allenabled.build.attachmode=-DCORE_ATTACH_ALL
-avrdb.menu.attach.manual=Only enabled ports. Please see documentation.
-avrdb.menu.attach.manual.build.attachmode=-DCORE_ATTACH_NONE
-avrdb.menu.attach.oldversion=Old version, new one is worse!
-avrdb.menu.attach.oldversion.build.attachmode=-DCORE_ATTACH_OLD
-avrdb.menu.attach.manual.build.attachabr=.aMan
-avrdb.menu.attach.oldversion.build.attachabr=.aOld
+avrdb.build.attachmode=-DCORE_ATTACH_ALL
 
 
 # MVIO menu                              
-
-avrdb.menu.mvio.enabled=Enabled
-avrdb.menu.mvio.enabled.bootloader.mviobits=01
-avrdb.menu.mvio.disabled=Disabled
-avrdb.menu.mvio.disabled.bootloader.mviobits=10
+avrdb.bootloader.mviobits=01
 
 
-# Startup time options                   
-
-avrdb.menu.startuptime.8=8ms
-avrdb.menu.startuptime.0=0ms
-avrdb.menu.startuptime.1=1ms
-avrdb.menu.startuptime.2=2ms
-avrdb.menu.startuptime.4=4ms
-avrdb.menu.startuptime.16=16ms
-avrdb.menu.startuptime.32=32ms
-avrdb.menu.startuptime.64=64ms
-avrdb.menu.startuptime.0.bootloader.sutbits=000
-avrdb.menu.startuptime.1.bootloader.sutbits=001
-avrdb.menu.startuptime.2.bootloader.sutbits=010
-avrdb.menu.startuptime.4.bootloader.sutbits=011
-avrdb.menu.startuptime.8.bootloader.sutbits=100
-avrdb.menu.startuptime.16.bootloader.sutbits=101
-avrdb.menu.startuptime.32.bootloader.sutbits=110
-avrdb.menu.startuptime.64.bootloader.sutbits=111
+# Startup time options  
+# Default set to 8 ms                 
+avrdb.bootloader.sutbits=100
 
 
 #         Wire Mode Selection         
