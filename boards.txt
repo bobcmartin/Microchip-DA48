@@ -94,7 +94,7 @@ avrdb.build.extra_flags= {bootloader.appspm}
 avrdb.build.export_merged_output=false
 avrdb.build.mcupostfix=
 avrdb.build.printf=
-
+avrdb.build.wireabr=
 
 # Bootloading parameters and fuses       
 avrdb.bootloader.tool=avrdude
@@ -160,54 +160,7 @@ avrdb.bootloader.mviobits=01
 # Default set to 8 ms                 
 avrdb.bootloader.sutbits=100
 
+# SPM            
 
-#         Wire Mode Selection         
-# To enable TWI1 or master+slave mode 
-
-avrdb.menu.wiremode.mors1=1x Wire, Master or Slave (least Flash & RAM)
-avrdb.menu.wiremode.mors1.build.wire.mode=MORS_SINGLE
-avrdb.menu.wiremode.mors1.build.wireabr=.wO
-avrdb.menu.wiremode.mands1=1x Wire, Master and Slave
-avrdb.menu.wiremode.mands1.build.wire.mode=MANDS_SINGLE
-avrdb.menu.wiremode.mands1.build.wireabr=.wA
-avrdb.menu.wiremode.mors2=2x Wire, Master or Slave (not available on 28-pin devices)
-avrdb.menu.wiremode.mors2.build.wire.mode=MORS_BOTH
-avrdb.menu.wiremode.mors2.build.wireabr=.wO2
-avrdb.menu.wiremode.mands2=2x Wire, Master and Slave (not available on 28-pin devices)
-avrdb.menu.wiremode.mands2.build.wire.mode=MANDS_BOTH
-avrdb.menu.wiremode.mands2.build.wireabr=.wA2
-
-
-# SPM (writing flash from app)           
-
-avrdb.menu.appspm.no=Disabled
-avrdb.menu.appspm.no.bootloader.appspm=
-avrdb.menu.appspm.no.build.appspmabr=
-avrdb.menu.appspm.no.bootloader.BOOTSIZE=0x00
-avrdb.menu.appspm.full=Anywhere
-avrdb.menu.appspm.full.bootloader.appspm=-DSPM_FROM_APP=-1
-avrdb.menu.appspm.full.build.appspmabr=.spmALL
-avrdb.menu.appspm.16plus=Above 16k
-avrdb.menu.appspm.16plus.bootloader.appspm=-DSPM_FROM_APP=32
-avrdb.menu.appspm.16plus.bootloader.CODESIZE=32
-avrdb.menu.appspm.24plus=Above 24k
-avrdb.menu.appspm.24plus.bootloader.appspm=-DSPM_FROM_APP=48
-avrdb.menu.appspm.24plus.bootloader.CODESIZE=48
-avrdb.menu.appspm.32plus=Above 32k (AVR128/64 only)
-avrdb.menu.appspm.32plus.bootloader.appspm=-DSPM_FROM_APP=64
-avrdb.menu.appspm.32plus.bootloader.CODESIZE=64
-avrdb.menu.appspm.48plus=Above 48k (AVR128/64 only)
-avrdb.menu.appspm.48plus.bootloader.appspm=-DSPM_FROM_APP=96
-avrdb.menu.appspm.48plus.bootloader.CODESIZE=96
-avrdb.menu.appspm.56plus=Above 56k (AVR128/64 only)
-avrdb.menu.appspm.56plus.bootloader.appspm=-DSPM_FROM_APP=112
-avrdb.menu.appspm.56plus.bootloader.CODESIZE=112
-avrdb.menu.appspm.64plus=Above 64k (AVR128 only)
-avrdb.menu.appspm.64plus.bootloader.appspm=-DSPM_FROM_APP=128
-avrdb.menu.appspm.64plus.bootloader.CODESIZE=128
-avrdb.menu.appspm.96plus=Above 96k (AVR128 only)
-avrdb.menu.appspm.96plus.bootloader.appspm=-DSPM_FROM_APP=192
-avrdb.menu.appspm.96plus.bootloader.CODESIZE=192
-avrdb.menu.appspm.112plus=Above 112k (AVR128 only)
-avrdb.menu.appspm.112plus.bootloader.appspm=-DSPM_FROM_APP=224
-avrdb.menu.appspm.112plus.bootloader.CODESIZE=224
+avrdb.bootloader.appspm=
+avrdb.bootloader.BOOTSIZE=0x00
