@@ -140,10 +140,7 @@ avrdb.bootloader.bodlevbits=000
 
 
 # Retain EEPROM (EESAVE)                 
-avrdb.menu.eesave.enable=EEPROM retained
-avrdb.menu.eesave.enable.bootloader.eesavebit=1
-avrdb.menu.eesave.disable=EEPROM not retained
-avrdb.menu.eesave.disable.bootloader.eesavebit=0
+avrdb.bootloader.eesavebit=1
 
 # Reset pin as GPIO option             
 avrdb.bootloader.resetpinbits=10
