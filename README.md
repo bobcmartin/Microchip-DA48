@@ -4,8 +4,8 @@ https://raw.githubusercontent.com/Emsloan/Microchip-DA48/package_index/package_T
 
 
 # AVR128DA48 Pin Map
-![Alt text](pics/AVR128DA48_pin_map.png "AVR128DA48")
+![AVR128DA48](AVR128DA48_pin_map.png "AVR128DA48")
 
 
 # AVR128DB48 Pin Map
-![AVR128DB48](pics/AVR128DB48_pin_map.png "AVR128DB48")
+![AVR128DB48](AVR128DB48_pin_map.png "AVR128DB48")
