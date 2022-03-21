@@ -17,11 +17,10 @@ versionnum.released=0
 version={versionnum.major}.{versionnum.minor}.{versionnum.patch}{versionnum.postfix}
 build.versiondefines=-DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DDXCORE="{version}" -DDXCORE_MAJOR={versionnum.major}UL -DDXCORE_MINOR={versionnum.minor}UL -DDXCORE_PATCH={versionnum.patch}UL -DDXCORE_RELEASED={versionnum.released}
 
-build.optiondefines=-DF_CPU=24000000L -DCLOCK_SOURCE=0 -DCORE_ATTACH_ALL -DTWI_MORS_SINGLE -DMILLIS_USE_TIMERB2
+build.optiondefines=-DF_CPU=24000000L -DCLOCK_SOURCE=0 -DCORE_ATTACH_ALL -DTWI_{build.wire.mode} -DMILLIS_USE_TIMERB2
 
 # Extra declarations to test moving setting from boards.txt 
 build.clocksource=0
-build.wireabr=.wO
 build.millis=-DMILLIS_USE_TIMERB2
 
 

@@ -76,7 +76,9 @@ avrda.bootloader.resetpinbits=10
 # Startup Time
 avrda.bootloader.SYSCFG1=0x04
 
-
+# Wire Mode
+avrda.build.wire.mode=MORS_SINGLE
+avrda.build.wireabr=.wO 
 
 ################################
 #  AVR-DB Settings             #
@@ -161,3 +163,7 @@ avrdb.bootloader.sutbits=100
 
 avrdb.bootloader.appspm=
 avrdb.bootloader.BOOTSIZE=0x00
+
+# Wire Mode
+avrdb.build.wire.mode=MORS_SINGLE
+avrdb.build.wireabr=.wO 
