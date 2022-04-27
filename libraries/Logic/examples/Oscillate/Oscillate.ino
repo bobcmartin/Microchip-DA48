@@ -464,7 +464,8 @@ void demo9a() {
   /* Event1 - EVSYS CHANNEL1 */
   Event1.stop();                            // Stop Event1 (if it was running)
   Event1.set_generator(gen::ccl0_out);      // Use output of Logic0
-  Event1.set_user(user::tca0_cnta);         // Connect Event1 (carrying Logic0 output) to TCA0 event a
+  Event1.set_user(user::tca0_cnt_a);        // Connect Event1 (carrying Logic0 output) to TCA0 event A
+  //                                        // Note that megaAVR 0-series and tinyAVR 0/1-series parts don't have an event b.
   Event1.start();                           // Enable Event1
 
   Logic::start();                           // Start the CCL hardware
@@ -492,6 +493,9 @@ void demo9a() {
 
 
 }
+
+#if !defined(DX_14_PINS)
+/* These examples are not written to be compatible with the highly constrained pincount of a DD/DU 14 part. */
 
 void demo9b() {
   /* Divided Clocks: TCB0 - prescale it without dedicating the prescaler of a TCA to it!
@@ -544,8 +548,10 @@ void demo9b() {
   TCB0.CTRLA = 0;
   TCB0.CTRLA = TCB_CLKSEL_DIV2_gc | TCB_ENABLE_bm;  // Switch to clk_per clock & enable
   Serial.println("Before (CLK_PER/2): ~47 kHz");    // 24 / 2 = 12 MHz, 12 MHz / 255 count/cycle = ~47 kHz
-  analogWrite(PIN_PF4, 128);                         // Output some pwm to demo change in frequency
-  delay(5000);
+  //we need to pick the PWM pin that the TCB is actually pointed at.
+  //
+  analogWrite(PIN_TCB0_WO_INIT, 128);               // Output some pwm to demo change in frequency
+  delay(5000);                                      // That constant is the pin that we can assume the core configures that timer for by default/
   TCB0.CTRLA = 0;                                   // Disable TCB0
   TCB0.CTRLA = TCB_CLKSEL_EVENT_gc | TCB_ENABLE_bm; // Switch to event clock & enable
   Serial.println("After: ~11.7 kHz");               // 24 / 8 = 3 MHz, 3 MHz / 255 count/cycle = ~11.7 kHz
@@ -646,6 +652,7 @@ void demo9d() {
   // "fake" PWM made from PROGEV equal to each other - which is just what I wanted.
 
 }
+#endif
 
 void demo10() {
   /* Another route to scaled clocks on event channel: TCD+PLL+CCL
@@ -710,7 +717,7 @@ void demo10() {
 
 
   /* TCB0 - Timer/Counter Type B */
-  analogWrite(PIN_PF4, 128);                         // Output some pwm to demo frequency
+  analogWrite(PIN_TCB0_WO_INIT, 128);               // Output some pwm to demo frequency
   TCB0.CTRLA = 0;                                   // Disable TCB0
   TCB0.CTRLA = TCB_CLKSEL_EVENT_gc | TCB_ENABLE_bm; // Switch to event clock & enable
   Serial.println("After: ~10.4 kHz");               // 24*2 / 18 = 2.667 MHz, 2.667 MHzz / 255 count/cycle = ~10.4 kHz
@@ -754,18 +761,19 @@ void loop() {
   delay(20000);
   TCA0.SINGLE.CTRLA &= ~TCA_SINGLE_ENABLE_bm;
 
-  #ifdef TCB_CLKSEL2_bm // Only parts with the third CLKSEL bit have event clock
+  #if defined(TCB_CLKSEL2_bm) && !defined(DX_14_PINS) // Only parts with the third CLKSEL bit have event clock
   Serial.println("Divided clocks: TCB gets independent prescaler! Dx/2-series only");
   demo9b();
   delay(10000);
-  digitalWrite(PIN_PF4, 0);
-  pinMode(PIN_PF4, INPUT);
+  digitalWrite(PIN_TCB0_WO_INIT, 0);
+  pinMode(PIN_TCB0_WO_INIT, INPUT);
   #endif
 
-  #if defined(SHOW_TCD_DEMO) && defined(TCD0)
+  #if defined(SHOW_TCD_DEMO) && defined(TCD0) && !defined(DX_14_PINS)
   Serial.println("Divided clocks: TCD pre-prescaler. Dx/1-series only");
   demo9d();
   delay(10000);
+
   digitalWrite(PIN_PA6, 0);
   pinMode(PIN_PA6, INPUT);
   #endif

@@ -237,19 +237,3 @@ class UartClass : public HardwareSerial {
 #if defined(USART5)
   extern UartClass Serial5;
 #endif
-
-/* USART.CTRLA  bit masks and bit positions */
-#define USART_RS485_bm  0x01  /* RS485 Mode internal transmitter bit mask. */
-#define USART_RS485_bp  0  /* RS485 Mode internal transmitter bit position. */
-#define USART_ABEIE_bm  0x04  /* Auto-baud Error Interrupt Enable bit mask. */
-#define USART_ABEIE_bp  2  /* Auto-baud Error Interrupt Enable bit position. */
-#define USART_LBME_bm  0x08  /* Loop-back Mode Enable bit mask. */
-#define USART_LBME_bp  3  /* Loop-back Mode Enable bit position. */
-#define USART_RXSIE_bm  0x10  /* Receiver Start Frame Interrupt Enable bit mask. */
-#define USART_RXSIE_bp  4  /* Receiver Start Frame Interrupt Enable bit position. */
-#define USART_DREIE_bm  0x20  /* Data Register Empty Interrupt Enable bit mask. */
-#define USART_DREIE_bp  5  /* Data Register Empty Interrupt Enable bit position. */
-#define USART_TXCIE_bm  0x40  /* Transmit Complete Interrupt Enable bit mask. */
-#define USART_TXCIE_bp  6  /* Transmit Complete Interrupt Enable bit position. */
-#define USART_RXCIE_bm  0x80  /* Receive Complete Interrupt Enable bit mask. */
-#define USART_RXCIE_bp  7  /* Receive Complete Interrupt Enable bit position. */
