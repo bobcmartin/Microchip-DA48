@@ -2,7 +2,7 @@
 	"packages": [
 		{
 			"name": "Microchip",
-			"maintainer": "Microchip",
+			"maintainer": "Microchip Inc",
 			"websiteURL": "https://github.com/bobcmartin/Microchip-DA48",
 			"email": "bob.martin@microchip.com",
 			"help": {
@@ -16,7 +16,7 @@
 					"category": "Contributed",
 					"url": "https://github.com/bobcmartin/Microchip-DA48/archive/refs/heads/master.zip",
 					"archiveFileName": "Microchip-DA48-master.zip",
-					"checksum": "SHA-256:7f024fc5f628febcd4552d0b76ce3d670a04cd6a032b77d4e01ed8d8eb2a5228",
+					"checksum": "FA58CE031ACE05DB9F7659CFF83CC87463568997F557861B3062A9B38EAA2226",
 					"size": "1535958",
 					"boards": [
 						{
